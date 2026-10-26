@@ -39,6 +39,38 @@ except Exception as error:
     )
     st.stop()
 
+# DATA PROVENANCE: information about the loaded dataset
+
+st.subheader("Data source and coverage")
+
+source_file = "data/iot_operations_01.csv"
+
+st.write("**Source file:**", source_file)
+st.write("**Total rows:**", f"{len(df):,}")
+st.write("**Total columns:**", len(df.columns))
+
+st.write("**Available columns:**")
+st.code(", ".join(df.columns.astype(str)))
+
+# Convert observation_date to dates for reporting.
+if "observation_date" in df.columns:
+    dates = pd.to_datetime(
+        df["observation_date"],
+        errors="coerce"
+    ).dropna()
+
+    if not dates.empty:
+        st.write(
+            "**Earliest observation:**",
+            str(dates.min().date())
+        )
+        st.write(
+            "**Latest observation:**",
+            str(dates.max().date())
+        )
+    else:
+        st.info("No valid observation dates were found.")
+
 # 4. Prepare the conversation history
 if "messages" not in st.session_state:
     st.session_state.messages = []
