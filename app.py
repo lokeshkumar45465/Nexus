@@ -38,8 +38,8 @@ except Exception as error:
         "and that data_loader.py works correctly."
     )
     st.stop()
-
-# DATA PROVENANCE: information about the loaded dataset
+# Define filtered_df
+filtered_df = df.copy()
 
 st.subheader("Data source and coverage")
 
@@ -206,30 +206,6 @@ if not type_counts.empty:
     st.bar_chart(type_counts)
 else:
     st.info("No equipment records match the filters.")
-
-st.subheader("Recorded health-score distribution")
-
-health_data = pd.to_numeric(
-    filtered_df["ai_health_index_score"],
-    errors="coerce"
-).dropna()
-
-if not health_data.empty:
-    health_counts = health_data.value_counts().sort_index()
-
-    st.line_chart(
-        health_counts,
-        x_label="Health score",
-        y_label="Number of records"
-    )
-else:
-    st.info("No numeric health scores are available.")
-st.subheader("Filtered IoT records")
-
-st.dataframe(
-    filtered_df.head(100),
-    use_container_width=True
-)
 st.session_state.messages.append(
     {
         "role": "assistant",
