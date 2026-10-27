@@ -168,6 +168,39 @@ st.sidebar.write(
     f"Matching records: {len(filtered_df):,}"
 )
 
+if "observation_date" in filtered_df.columns:
+    filtered_df["observation_date"] = pd.to_datetime(
+        filtered_df["observation_date"],
+        errors="coerce"
+    )
+
+    valid_dates = (
+        filtered_df["observation_date"]
+        .dropna()
+    )
+
+    if not valid_dates.empty:
+        min_date = valid_dates.min().date()
+        max_date = valid_dates.max().date()
+
+        selected_dates = st.sidebar.date_input(
+            "Observation date range",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date
+        )
+
+        if (
+            isinstance(selected_dates, (tuple, list))
+            and len(selected_dates) == 2
+        ):
+            start_date, end_date = selected_dates
+
+            filtered_df = filtered_df[
+                filtered_df["observation_date"].dt.date
+                .between(start_date, end_date)
+            ]
+
 
 
 # 7. Create the chat input
