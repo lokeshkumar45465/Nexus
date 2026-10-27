@@ -142,65 +142,6 @@ for message in st.session_state.messages:
                 use_container_width=True
             )
 
-st.sidebar.header("Dataset filters")
-
-# Get actual equipment types from the CSV.
-equipment_types = sorted(
-    df["asset_type"].dropna().astype(str).unique().tolist()
-)
-
-selected_type = st.sidebar.selectbox(
-    "Equipment type",
-    ["All types"] + equipment_types
-)
-
-# Start with all records.
-filtered_df = df.copy()
-
-# Apply the selected equipment type.
-if selected_type != "All types":
-    filtered_df = filtered_df[
-        filtered_df["asset_type"].astype(str)
-        == selected_type
-    ]
-
-st.sidebar.write(
-    f"Matching records: {len(filtered_df):,}"
-)
-
-if "observation_date" in filtered_df.columns:
-    filtered_df["observation_date"] = pd.to_datetime(
-        filtered_df["observation_date"],
-        errors="coerce"
-    )
-
-    valid_dates = (
-        filtered_df["observation_date"]
-        .dropna()
-    )
-
-    if not valid_dates.empty:
-        min_date = valid_dates.min().date()
-        max_date = valid_dates.max().date()
-
-        selected_dates = st.sidebar.date_input(
-            "Observation date range",
-            value=(min_date, max_date),
-            min_value=min_date,
-            max_value=max_date
-        )
-
-        if (
-            isinstance(selected_dates, (tuple, list))
-            and len(selected_dates) == 2
-        ):
-            start_date, end_date = selected_dates
-
-            filtered_df = filtered_df[
-                filtered_df["observation_date"].dt.date
-                .between(start_date, end_date)
-            ]
-
 
 
 # 7. Create the chat input
@@ -225,7 +166,7 @@ if "pending_question" in st.session_state:
     result_table = None
 
     # 8. Match the question to an analytics function
-    answer = understand_question(user_question, df)
+    answer = understand_question(user_question, filtered_df)
 
 st.session_state.messages.append(
     {
