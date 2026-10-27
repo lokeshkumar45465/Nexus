@@ -207,6 +207,24 @@ if not type_counts.empty:
 else:
     st.info("No equipment records match the filters.")
 
+st.subheader("Recorded health-score distribution")
+
+health_data = pd.to_numeric(
+    filtered_df["ai_health_index_score"],
+    errors="coerce"
+).dropna()
+
+if not health_data.empty:
+    health_counts = health_data.value_counts().sort_index()
+
+    st.line_chart(
+        health_counts,
+        x_label="Health score",
+        y_label="Number of records"
+    )
+else:
+    st.info("No numeric health scores are available.")
+
 st.session_state.messages.append(
     {
         "role": "assistant",
