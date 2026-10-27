@@ -198,6 +198,15 @@ col3.metric(
     health_display
 )
 
+st.subheader("Records by equipment type")
+
+type_counts = filtered_df["asset_type"].value_counts()
+
+if not type_counts.empty:
+    st.bar_chart(type_counts)
+else:
+    st.info("No equipment records match the filters.")
+
 st.session_state.messages.append(
     {
         "role": "assistant",
