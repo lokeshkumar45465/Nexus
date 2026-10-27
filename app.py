@@ -224,7 +224,12 @@ if not health_data.empty:
     )
 else:
     st.info("No numeric health scores are available.")
+st.subheader("Filtered IoT records")
 
+st.dataframe(
+    filtered_df.head(100),
+    use_container_width=True
+)
 st.session_state.messages.append(
     {
         "role": "assistant",
