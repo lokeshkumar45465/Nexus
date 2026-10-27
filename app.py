@@ -98,9 +98,49 @@ for index, question in enumerate(examples):
 # 6. Display the results area
 st.subheader("Conversation")
 
+
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+
+        if message["role"] == "assistant":
+            with st.expander("Check answer source"):
+                st.write(
+                    "**Source:** data/iot_operations_01.csv"
+                )
+                st.write(
+                    "**Dataset records available:**",
+                    f"{len(df):,}"
+                )
+
+                if "health score" in message["content"].lower():
+                    st.write(
+                        "**Relevant column:** "
+                        "ai_health_index_score"
+                    )
+
+                elif "failure" in message["content"].lower():
+                    st.write(
+                        "**Relevant column:** "
+                        "unscheduled_failure_within_7d"
+                    )
+
+                elif "maintenance" in message["content"].lower():
+                    st.write(
+                        "**Relevant column:** "
+                        "scheduled_pm_due_within_7d"
+                    )
+
+                elif "records" in message["content"].lower():
+                    st.write(
+                        "**Relevant data:** all dataset rows"
+                    )
+
+        if "table" in message:
+            st.dataframe(
+                message["table"],
+                use_container_width=True
+            )
 
         if "table" in message:
             st.dataframe(
