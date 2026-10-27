@@ -142,11 +142,33 @@ for message in st.session_state.messages:
                 use_container_width=True
             )
 
-        if "table" in message:
-            st.dataframe(
-                message["table"],
-                use_container_width=True,
-            )
+st.sidebar.header("Dataset filters")
+
+# Get actual equipment types from the CSV.
+equipment_types = sorted(
+    df["asset_type"].dropna().astype(str).unique().tolist()
+)
+
+selected_type = st.sidebar.selectbox(
+    "Equipment type",
+    ["All types"] + equipment_types
+)
+
+# Start with all records.
+filtered_df = df.copy()
+
+# Apply the selected equipment type.
+if selected_type != "All types":
+    filtered_df = filtered_df[
+        filtered_df["asset_type"].astype(str)
+        == selected_type
+    ]
+
+st.sidebar.write(
+    f"Matching records: {len(filtered_df):,}"
+)
+
+
 
 # 7. Create the chat input
 question = st.chat_input(
