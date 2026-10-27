@@ -1,4 +1,3 @@
-from question_handler import understand_question
 from analytics import (
     count_equipment,
     average_health_score,
@@ -8,16 +7,8 @@ from analytics import (
 
 
 def understand_question(question, df):
-    """
-    Recognize supported questions and return
-    an answer based on the actual dataset.
-    """
-
-    # Convert the question to lowercase
-    # and remove extra spaces.
     text = question.casefold().strip()
 
-    # Rule 1: Count all dataset records.
     record_questions = [
         "how many records",
         "total records",
@@ -27,13 +18,8 @@ def understand_question(question, df):
 
     if any(phrase in text for phrase in record_questions):
         result = count_equipment(df)
+        return f"The dataset contains {result['total_records']:,} records."
 
-        return (
-            f"The dataset contains "
-            f"{result['total_records']:,} records."
-        )
-
-    # Rule 2: Count unique assets.
     asset_questions = [
         "unique assets",
         "distinct assets",
@@ -43,20 +29,9 @@ def understand_question(question, df):
 
     if any(phrase in text for phrase in asset_questions):
         result = count_equipment(df)
+        return f"The dataset contains {result['unique_assets']:,} unique asset IDs."
 
-        return (
-            f"The dataset contains "
-            f"{result['unique_assets']:,} unique asset IDs."
-        )
-
-    # Rule 3: Calculate average health score.
-    health_questions = [
-        "average health",
-        "average health score",
-        "health score average",
-    ]
-
-    if any(phrase in text for phrase in health_questions):
+    if "health" in text:
         score = average_health_score(df)
 
         if score is None:
@@ -64,29 +39,16 @@ def understand_question(question, df):
 
         return f"The average recorded health score is {score}."
 
-    # Rule 4: Find recorded failures.
-    if "failure" in text or "failures" in text:
+    if "failure" in text:
         failures = find_recorded_failures(df)
+        return f"Found {len(failures):,} records marked as unscheduled failures."
 
-        return (
-            f"Found {len(failures):,} records marked "
-            "as unscheduled failures."
-        )
-
-    # Rule 5: Find maintenance due.
     if "maintenance" in text:
         maintenance = find_maintenance_due(df)
+        return f"Found {len(maintenance):,} records marked as maintenance due within 7 days."
 
-        return (
-            f"Found {len(maintenance):,} records marked "
-            "as maintenance due within 7 days."
-        )
-
-    # Rule 6: Safely handle unsupported questions.
     return (
-        "I'm not able to answer that question yet "
-        "using the available IoT dataset. "
-        "Try asking about record counts, unique assets, "
-        "average health score, recorded failures, "
-        "or maintenance due within 7 days."
+        "I can't answer that question using the current rules. "
+        "Try asking about records, assets, health scores, "
+        "failures, or maintenance."
     )
