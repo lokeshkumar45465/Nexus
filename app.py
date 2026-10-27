@@ -274,7 +274,119 @@ if not filtered_df.empty:
 else:
     st.info("No equipment records match the selected filter.")
 
+# 14. Temperature and vibration charts
+st.header("🌡️ Sensor Readings Over Time")
 
+st.write(
+    "Explore recorded bearing temperature and vibration "
+    "readings for the selected equipment."
+)
+
+# Check whether the required sensor columns exist.
+sensor_columns = [
+    "observation_date",
+    "bearing_temp_c",
+    "vibration_rms_mm_s",
+]
+
+missing_sensor_columns = [
+    column
+    for column in sensor_columns
+    if column not in filtered_df.columns
+]
+
+if missing_sensor_columns:
+    st.warning(
+        "Sensor charts cannot be displayed because these "
+        f"columns are missing: {', '.join(missing_sensor_columns)}"
+    )
+
+elif filtered_df.empty:
+    st.info("No records match the selected equipment filter.")
+
+else:
+    # Work on a copy so the original dataset is unchanged.
+    sensor_df = filtered_df[
+        sensor_columns
+    ].copy()
+
+    # Convert sensor readings into numeric values.
+    sensor_df["bearing_temp_c"] = pd.to_numeric(
+        sensor_df["bearing_temp_c"],
+        errors="coerce",
+    )
+
+    sensor_df["vibration_rms_mm_s"] = pd.to_numeric(
+        sensor_df["vibration_rms_mm_s"],
+        errors="coerce",
+    )
+
+    # Convert observation dates into real date values.
+    sensor_df["observation_date"] = pd.to_datetime(
+        sensor_df["observation_date"],
+        errors="coerce",
+    )
+
+    # Show the two charts side by side.
+    temperature_col, vibration_col = st.columns(2)
+
+    # Temperature chart.
+    with temperature_col:
+        st.subheader("Bearing Temperature")
+
+        temperature_data = sensor_df.dropna(
+            subset=["observation_date", "bearing_temp_c"]
+        )
+
+        if not temperature_data.empty:
+            temperature_chart = (
+                temperature_data
+                .groupby("observation_date")["bearing_temp_c"]
+                .mean()
+                .sort_index()
+            )
+
+            st.line_chart(
+                temperature_chart,
+                y_label="Temperature (°C)",
+            )
+
+            st.metric(
+                "Average temperature",
+                f"{temperature_data['bearing_temp_c'].mean():.2f} °C",
+            )
+
+        else:
+            st.info("No valid temperature readings with dates found.")
+
+    # Vibration chart.
+    with vibration_col:
+        st.subheader("Vibration Level")
+
+        vibration_data = sensor_df.dropna(
+            subset=["observation_date", "vibration_rms_mm_s"]
+        )
+
+        if not vibration_data.empty:
+            vibration_chart = (
+                vibration_data
+                .groupby("observation_date")["vibration_rms_mm_s"]
+                .mean()
+                .sort_index()
+            )
+
+            st.line_chart(
+                vibration_chart,
+                y_label="Vibration (mm/s RMS)",
+            )
+
+            st.metric(
+                "Average vibration",
+                f"{vibration_data['vibration_rms_mm_s'].mean():.2f} mm/s",
+            )
+
+        else:
+            st.info("No valid vibration readings with dates found.")
 # 14. Display dataset records
 st.subheader("Explore records")
 
