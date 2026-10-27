@@ -1,14 +1,10 @@
 
 import streamlit as st
 import pandas as pd
+
 from data_loader import load_dataset
-from analytics import (
-    count_equipment,
-    average_health_score,
-    find_recorded_failures,
-    find_maintenance_due,
-)
 from question_handler import understand_question
+
 
 # 1. Configure the webpage
 st.set_page_config(
@@ -17,65 +13,118 @@ st.set_page_config(
     layout="wide",
 )
 
+
 # 2. Display the application title
 st.title("🤖 EdgeSight Query Nexus")
 st.write(
-    "Ask questions about your IoT equipment and "
-    "explore your dataset."
+    "Ask questions about your IoT equipment, "
+    "explore recorded data, and review equipment health."
 )
 
-# 3. Load the dataset
+
+# 3. Load the dataset safely
 @st.cache_data
 def get_data():
     return load_dataset()
+
 
 try:
     df = get_data()
 except Exception as error:
     st.error(f"Could not load the dataset: {error}")
     st.info(
-        "Check that the CSV is in the data folder "
+        "Check that data/iot_operations_01.csv exists "
         "and that data_loader.py works correctly."
     )
     st.stop()
-# Define filtered_df
-filtered_df = df.copy()
 
-st.subheader("Data source and coverage")
 
-source_file = "data/iot_operations_01.csv"
+# 4. Check that the columns used by the dashboard exist
+required_dashboard_columns = [
+    "asset_id",
+    "asset_type",
+    "ai_health_index_score",
+]
 
-st.write("**Source file:**", source_file)
-st.write("**Total rows:**", f"{len(df):,}")
-st.write("**Total columns:**", len(df.columns))
+missing_columns = [
+    column
+    for column in required_dashboard_columns
+    if column not in df.columns
+]
 
-st.write("**Available columns:**")
-st.code(", ".join(df.columns.astype(str)))
+if missing_columns:
+    st.error(
+        f"The dataset is missing required dashboard columns: "
+        f"{', '.join(missing_columns)}"
+    )
+    st.stop()
 
-# Convert observation_date to dates for reporting.
-if "observation_date" in df.columns:
-    dates = pd.to_datetime(
-        df["observation_date"],
-        errors="coerce"
-    ).dropna()
 
-    if not dates.empty:
-        st.write(
-            "**Earliest observation:**",
-            str(dates.min().date())
-        )
-        st.write(
-            "**Latest observation:**",
-            str(dates.max().date())
-        )
-    else:
-        st.info("No valid observation dates were found.")
-
-# 4. Prepare the conversation history
+# 5. Prepare the conversation history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 5. Create the example questions
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
+
+
+# 6. Data source and coverage
+with st.expander("Dataset source and coverage", expanded=False):
+    st.write("**Source file:** data/iot_operations_01.csv")
+    st.write(f"**Total rows:** {len(df):,}")
+    st.write(f"**Total columns:** {len(df.columns)}")
+
+    st.write("**Available columns:**")
+    st.code(", ".join(df.columns.astype(str)))
+
+    if "observation_date" in df.columns:
+        dates = pd.to_datetime(
+            df["observation_date"],
+            errors="coerce",
+        ).dropna()
+
+        if not dates.empty:
+            st.write(
+                "**Earliest observation:**",
+                str(dates.min().date()),
+            )
+            st.write(
+                "**Latest observation:**",
+                str(dates.max().date()),
+            )
+        else:
+            st.info("No valid observation dates were found.")
+
+
+# 7. Equipment type filter
+st.sidebar.header("Dashboard filters")
+
+asset_types = sorted(
+    df["asset_type"]
+    .dropna()
+    .astype(str)
+    .unique()
+    .tolist()
+)
+
+selected_type = st.sidebar.selectbox(
+    "Equipment type",
+    options=["All equipment types"] + asset_types,
+)
+
+if selected_type == "All equipment types":
+    filtered_df = df.copy()
+else:
+    filtered_df = df[
+        df["asset_type"].astype(str) == selected_type
+    ].copy()
+
+st.sidebar.write(
+    f"**Matching records:** {len(filtered_df):,}"
+)
+
+
+# 8. Example questions
 st.subheader("Try an example question")
 
 examples = [
@@ -85,19 +134,67 @@ examples = [
     "How many maintenance records are due?",
 ]
 
-columns = st.columns(2)
+example_columns = st.columns(2)
 
-for index, question in enumerate(examples):
-    if columns[index % 2].button(
-        question,
+for index, example in enumerate(examples):
+    if example_columns[index % 2].button(
+        example,
         key=f"example_{index}",
         use_container_width=True,
     ):
-        st.session_state.pending_question = question
+        st.session_state.pending_question = example
 
-# 6. Display the results area
+
+# 9. Chat input
+question = st.chat_input(
+    "Ask a question about your IoT dataset..."
+)
+
+if question and question.strip():
+    st.session_state.pending_question = question.strip()
+
+
+# 10. Process the question BEFORE displaying the conversation
+if st.session_state.pending_question:
+    user_question = st.session_state.pending_question
+
+    # Clear the pending question so it is not processed repeatedly.
+    st.session_state.pending_question = None
+
+    # Save the user's question.
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_question,
+    })
+
+    # Calculate the answer before using the answer variable.
+    try:
+        answer = understand_question(user_question, filtered_df)
+
+        if not isinstance(answer, str):
+            answer = str(answer)
+
+    except Exception as error:
+        answer = (
+            "Sorry, I couldn't process that question. "
+            f"Details: {error}"
+        )
+
+    # Save the assistant's answer exactly once.
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+    })
+
+
+# 11. Display the conversation
 st.subheader("Conversation")
 
+if not st.session_state.messages:
+    st.info(
+        "Choose an example question above or type a question "
+        "in the chat box."
+    )
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -109,82 +206,51 @@ for message in st.session_state.messages:
                     "**Source:** data/iot_operations_01.csv"
                 )
                 st.write(
-                    "**Dataset records available:**",
-                    f"{len(df):,}"
+                    "**Records available to this answer:**",
+                    f"{len(filtered_df):,}",
                 )
 
-                if "health score" in message["content"].lower():
+                content = message["content"].casefold()
+
+                if "health" in content:
                     st.write(
                         "**Relevant column:** "
                         "ai_health_index_score"
                     )
-
-                elif "failure" in message["content"].lower():
+                elif "failure" in content:
                     st.write(
                         "**Relevant column:** "
                         "unscheduled_failure_within_7d"
                     )
-
-                elif "maintenance" in message["content"].lower():
+                elif "maintenance" in content:
                     st.write(
                         "**Relevant column:** "
                         "scheduled_pm_due_within_7d"
                     )
-
-                elif "records" in message["content"].lower():
+                elif "record" in content:
                     st.write(
-                        "**Relevant data:** all dataset rows"
+                        "**Relevant data:** dataset rows"
                     )
 
-        if "table" in message:
-            st.dataframe(
-                message["table"],
-                use_container_width=True
-            )
 
-
-
-# 7. Create the chat input
-question = st.chat_input(
-    "Ask a question about your IoT dataset..."
-)
-
-# Process either a typed question or an example question
-if question:
-    st.session_state.pending_question = question
-
-if "pending_question" in st.session_state:
-    user_question = st.session_state.pop("pending_question")
-
-    # Save and display the user's question
-    st.session_state.messages.append(
-        {"role": "user", "content": user_question}
-    )
-
-    normalized = user_question.casefold()
-    answer = ""
-    result_table = None
-
-    # 8. Match the question to an analytics function
-    answer = understand_question(user_question, filtered_df)
-
+# 12. IoT Operations Dashboard
 st.header("IoT Operations Dashboard")
 
 col1, col2, col3 = st.columns(3)
 
 col1.metric(
     "Matching records",
-    f"{len(filtered_df):,}"
+    f"{len(filtered_df):,}",
 )
 
 col2.metric(
     "Unique assets",
-    f"{filtered_df['asset_id'].nunique():,}"
+    f"{filtered_df['asset_id'].nunique():,}",
 )
 
 health_scores = pd.to_numeric(
     filtered_df["ai_health_index_score"],
-    errors="coerce"
+    errors="coerce",
 )
 
 if health_scores.notna().any():
@@ -195,21 +261,29 @@ else:
 
 col3.metric(
     "Average health score",
-    health_display
+    health_display,
 )
 
+
+# 13. Records by equipment type
 st.subheader("Records by equipment type")
 
-type_counts = filtered_df["asset_type"].value_counts()
-
-if not type_counts.empty:
+if not filtered_df.empty:
+    type_counts = filtered_df["asset_type"].value_counts()
     st.bar_chart(type_counts)
 else:
-    st.info("No equipment records match the filters.")
-st.session_state.messages.append(
-    {
-        "role": "assistant",
-        "content": answer,
-    }
-)
-st.rerun()
+    st.info("No equipment records match the selected filter.")
+
+
+# 14. Display dataset records
+st.subheader("Explore records")
+
+if not filtered_df.empty:
+    st.dataframe(
+        filtered_df.head(100),
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.caption("Showing up to 100 matching records.")
+else:
+    st.info("There are no records to display.")
