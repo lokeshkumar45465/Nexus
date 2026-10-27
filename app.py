@@ -168,6 +168,36 @@ if "pending_question" in st.session_state:
     # 8. Match the question to an analytics function
     answer = understand_question(user_question, filtered_df)
 
+st.header("IoT Operations Dashboard")
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric(
+    "Matching records",
+    f"{len(filtered_df):,}"
+)
+
+col2.metric(
+    "Unique assets",
+    f"{filtered_df['asset_id'].nunique():,}"
+)
+
+health_scores = pd.to_numeric(
+    filtered_df["ai_health_index_score"],
+    errors="coerce"
+)
+
+if health_scores.notna().any():
+    average_health = round(health_scores.mean(), 2)
+    health_display = str(average_health)
+else:
+    health_display = "No data"
+
+col3.metric(
+    "Average health score",
+    health_display
+)
+
 st.session_state.messages.append(
     {
         "role": "assistant",
