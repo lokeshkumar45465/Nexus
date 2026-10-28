@@ -1,6 +1,6 @@
 
 import pandas as pd
-from data_loader import load_dataset
+from data_loader import get_dataset_from_database
 
 
 def count_equipment(df):
@@ -65,7 +65,7 @@ def find_maintenance_due(df):
 
 if __name__ == "__main__":
     # Load the actual CSV using our existing file
-    data = load_dataset()
+    data = get_dataset_from_database()
 
     # 1. Count records and unique assets
     counts = count_equipment(data)
