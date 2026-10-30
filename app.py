@@ -2,6 +2,17 @@ import streamlit as st
 import pandas as pd
 
 from data_loader import load_dataset
+from database import initialize_database
+from auth import login_user
+
+from chat_history import (
+    create_conversation,
+    get_user_conversations,
+    save_message,
+    get_conversation_messages,
+    rename_conversation,
+    delete_conversation
+)
 
 from rag_engine import (
     generate_rag_answer,
@@ -18,7 +29,42 @@ st.set_page_config(
     page_icon="🤖",
     layout="wide",
 )
+# Initialize database
+initialize_database()
 
+# Initialize login session
+if "user" not in st.session_state:
+    st.session_state.user = None
+
+# Show login page if user is not logged in
+if st.session_state.user is None:
+
+    st.title("🤖 EdgeSight Query Nexus")
+    st.subheader("Login to your account")
+
+    with st.form("login_form"):
+
+        username = st.text_input("Username")
+        password = st.text_input(
+            "Password",
+            type="password"
+        )
+
+        login_button = st.form_submit_button("Login")
+
+        if login_button:
+
+            user = login_user(username, password)
+
+            if user:
+                st.session_state.user = user
+                st.success("Login successful!")
+                st.rerun()
+
+            else:
+                st.error("Invalid username or password.")
+
+    st.stop()
 
 # --------------------------------------------------
 # 2. Load the dataset
@@ -43,24 +89,198 @@ if df.empty:
     st.warning("The dataset is empty. Please check your CSV file.")
 
 
+
 # --------------------------------------------------
-# 3. Initialize chat history
+# 3. Initialize chat session
 # --------------------------------------------------
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
 
+if "current_conversation_id" not in st.session_state:
+    st.session_state.current_conversation_id = None
+
 
 # --------------------------------------------------
-# 4. Sidebar navigation
+# 4. EdgeSight branding and sidebar
 # --------------------------------------------------
-st.sidebar.title("🤖 EdgeSight")
-st.sidebar.caption("IoT Operations Assistant")
 
+user_id = st.session_state.user["user_id"]
+
+# Custom interface styling
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1.8rem;
+        padding-bottom: 2rem;
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #101827;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #E8EEF7;
+    }
+
+    .edge-brand {
+        font-size: 25px;
+        font-weight: 800;
+        color: #63D6C5;
+        letter-spacing: -1px;
+    }
+
+    .edge-subtitle {
+        color: #A9B8CB;
+        font-size: 11px;
+        letter-spacing: 2px;
+    }
+
+    .edge-welcome {
+        padding: 24px;
+        border-radius: 18px;
+        background: linear-gradient(120deg, #142B49, #176C75);
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .edge-welcome h2 {
+        color: white;
+    }
+
+    div[data-testid="stChatMessage"] {
+        border-radius: 12px;
+        padding: 10px;
+    }
+
+    .stChatInput {
+        border-radius: 15px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# Sidebar branding
+st.sidebar.markdown("""
+<div style="padding: 12px 4px 20px 4px;">
+    <div style="font-size:30px;">◈</div>
+    <div class="edge-brand">EdgeSight</div>
+    <div class="edge-subtitle">QUERY NEXUS</div>
+    <p style="font-size:12px;color:#A9B8CB;">
+        Intelligent IoT Operations Assistant
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+st.sidebar.caption(
+    f"Logged in as {st.session_state.user['username']}"
+)
+
+# Logout button — only one instance
+if st.sidebar.button(
+    "↪ Logout",
+    key=f"logout_{user_id}",
+    use_container_width=True
+):
+    st.session_state.user = None
+    st.session_state.messages = []
+    st.session_state.pending_question = None
+    st.session_state.current_conversation_id = None
+    st.rerun()
+
+
+# --------------------------------------------------
+# Chat history sidebar
+# --------------------------------------------------
+
+st.sidebar.divider()
+st.sidebar.subheader("💬 Your conversations")
+
+# Only ONE New Chat button
+if st.sidebar.button(
+    "＋ New Chat",
+    key="edgesight_new_chat",
+    use_container_width=True
+):
+    st.session_state.current_conversation_id = None
+    st.session_state.messages = []
+    st.session_state.pending_question = None
+    st.rerun()
+
+
+# Fetch saved conversations from SQLite
+conversations = get_user_conversations(user_id)
+
+if conversations:
+
+    for conversation in conversations:
+
+        conversation_id = conversation["conversation_id"]
+        title = conversation["title"]
+
+        # Open a saved conversation
+        if st.sidebar.button(
+            f"💬 {title}",
+            key=f"open_conversation_{conversation_id}",
+            use_container_width=True
+        ):
+            st.session_state.current_conversation_id = conversation_id
+
+            st.session_state.messages = get_conversation_messages(
+                user_id,
+                conversation_id
+            )
+
+            st.session_state.pending_question = None
+            st.rerun()
+
+        # Rename and delete controls
+        with st.sidebar.expander(
+            "⚙ Manage chat",
+            expanded=False
+        ):
+
+            new_title = st.text_input(
+                "Conversation title",
+                value=title,
+                key=f"rename_input_{conversation_id}"
+            )
+
+            if st.button(
+                "Rename",
+                key=f"rename_button_{conversation_id}",
+                use_container_width=True
+            ):
+                if rename_conversation(
+                    user_id,
+                    conversation_id,
+                    new_title
+                ):
+                    st.success("Conversation renamed.")
+                    st.rerun()
+                else:
+                    st.warning("Enter a valid title (1–100 characters).")
+
+            if st.button(
+                "Delete conversation",
+                key=f"delete_button_{conversation_id}",
+                use_container_width=True
+            ):
+                delete_conversation(user_id, conversation_id)
+
+                if st.session_state.current_conversation_id == conversation_id:
+                    st.session_state.current_conversation_id = None
+                    st.session_state.messages = []
+
+                st.rerun()
+
+else:
+    st.sidebar.caption("Your conversations will appear here.")
 selected_page = st.sidebar.radio(
-    "Choose a feature",
+    "choose a feature",
     [
         "Chat",
         "Knowledge Base",
@@ -74,6 +294,7 @@ selected_page = st.sidebar.radio(
 
 # The equipment filter is only shown on dashboard pages.
 if selected_page not in ["Chat", "Knowledge Base"]:
+    
     st.sidebar.divider()
     st.sidebar.subheader("Dashboard Filters")
 
@@ -111,97 +332,132 @@ else:
     filtered_df = df.copy()
 
 
+
 # --------------------------------------------------
 # 5. Chat page
 # --------------------------------------------------
+
 if selected_page == "Chat":
 
-    st.title("🤖 EdgeSight Query Nexus")
-    st.caption(
-        "Your AI assistant for IoT equipment, sensor readings, "
-        "failures, maintenance, and equipment health."
-    )
+    st.markdown("""
+    <div class="edge-welcome">
+        <h2>◈ Welcome to EdgeSight Query Nexus</h2>
+        <p>
+            Your intelligent assistant for IoT operations,
+            equipment monitoring and predictive maintenance.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.divider()
-
-    # Quick-action questions
+    # Welcome suggestions
     examples = [
         "How many records are in the dataset?",
         "What is the average health score?",
         "How many recorded failures are there?",
-        "How many maintenance records are due?",
+        "How many maintenance records are due?"
     ]
 
-    # Show quick actions when the conversation is empty.
     if not st.session_state.messages:
-        st.subheader("What would you like to know?")
 
-        example_columns = st.columns(2)
+        st.subheader("What would you like to explore?")
+
+        col1, col2 = st.columns(2)
 
         for index, example in enumerate(examples):
-            with example_columns[index % 2]:
+
+            with (col1 if index % 2 == 0 else col2):
+
                 if st.button(
-                    example,
-                    key=f"chat_example_{index}",
-                    use_container_width=True,
+                    f"✦ {example}",
+                    key=f"edge_example_{index}",
+                    use_container_width=True
                 ):
                     st.session_state.pending_question = example
 
-    # Read the question submitted in the chat box.
+    # Chat input
     question = st.chat_input(
-        "Ask a question about your IoT dataset..."
+        "Message EdgeSight Query Nexus..."
     )
 
     if question and question.strip():
         st.session_state.pending_question = question.strip()
 
-    # Process a new question before displaying messages.
+    # Process a new question
     if st.session_state.pending_question:
+
         user_question = st.session_state.pending_question
         st.session_state.pending_question = None
 
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": user_question,
-            }
-        )
+        # Create conversation when the first message arrives
+        if st.session_state.current_conversation_id is None:
 
-        try:
-            answer = generate_rag_answer(
-                user_question,
-                df,
-                chat_history=st.session_state.messages[:-1],
+            st.session_state.current_conversation_id = create_conversation(
+                user_id,
+                title=user_question[:40]
             )
 
-            if not isinstance(answer, str):
-                answer = str(answer)
+        conversation_id = st.session_state.current_conversation_id
+
+        # Save user message
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_question
+        })
+
+        save_message(
+            user_id,
+            conversation_id,
+            "user",
+            user_question
+        )
+
+        # Generate AI answer
+        try:
+
+            with st.spinner("EdgeSight is analyzing your IoT data..."):
+
+                answer = generate_rag_answer(
+                    user_question,
+                    df,
+                    chat_history=st.session_state.messages[:-1]
+                )
+
+                if not isinstance(answer, str):
+                    answer = str(answer)
 
         except Exception as error:
+
             answer = (
-                "I couldn't generate an answer from the knowledge base.\n\n"
-                "Please check that the knowledge base is properly indexed and that "
-                "your configured model is installed.\n\n"
+                "I couldn't generate a response. "
+                "Please check that Ollama is running and that "
+                "the required models are installed.\n\n"
                 f"Technical details: {error}"
             )
 
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": answer,
-            }
+        # Save assistant response
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        save_message(
+            user_id,
+            conversation_id,
+            "assistant",
+            answer
         )
 
-    # Display only the conversation on the Chat page.
-    if st.session_state.messages:
-        for message in st.session_state.messages:
+        # Refresh sidebar to show the new conversation
+        st.rerun()
+
+    # Always display conversation history
+    for message in st.session_state.messages:
+
+        if message["role"] in ["user", "assistant"]:
+
             with st.chat_message(message["role"]):
+
                 st.markdown(message["content"])
-    else:
-        st.info(
-            "Choose a quick question above or type your own "
-            "question in the message box."
-        )
 
 
 # --------------------------------------------------
