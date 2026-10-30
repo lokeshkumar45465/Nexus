@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 
 from data_loader import load_dataset
-from ollama_chat import generate_ai_answer
+
+from rag_engine import (
+    generate_rag_answer,
+    index_documents,
+    get_knowledge_base_count,
+)
 
 
 # --------------------------------------------------
@@ -58,6 +63,7 @@ selected_page = st.sidebar.radio(
     "Choose a feature",
     [
         "Chat",
+        "Knowledge Base",
         "Overview",
         "Sensor Charts",
         "Equipment Health",
@@ -67,7 +73,7 @@ selected_page = st.sidebar.radio(
 )
 
 # The equipment filter is only shown on dashboard pages.
-if selected_page != "Chat":
+if selected_page not in ["Chat", "Knowledge Base"]:
     st.sidebar.divider()
     st.sidebar.subheader("Dashboard Filters")
 
@@ -101,7 +107,7 @@ if selected_page != "Chat":
             "The dataset does not contain an asset_type column."
         )
 else:
-    # Chat uses the complete dataset, without dashboard filters.
+    # Chat and Knowledge Base use the complete dataset, without dashboard filters.
     filtered_df = df.copy()
 
 
@@ -162,7 +168,7 @@ if selected_page == "Chat":
         )
 
         try:
-            answer = generate_ai_answer(
+            answer = generate_rag_answer(
                 user_question,
                 df,
                 chat_history=st.session_state.messages[:-1],
@@ -173,8 +179,8 @@ if selected_page == "Chat":
 
         except Exception as error:
             answer = (
-                "I couldn't generate an answer from Ollama.\n\n"
-                "Please check that Ollama is running and that "
+                "I couldn't generate an answer from the knowledge base.\n\n"
+                "Please check that the knowledge base is properly indexed and that "
                 "your configured model is installed.\n\n"
                 f"Technical details: {error}"
             )
@@ -549,3 +555,95 @@ elif selected_page == "Explore Records":
             file_name="iot_filtered_records.csv",
             mime="text/csv",
         )
+        # --------------------------------------------------
+# 10. Knowledge Base page
+# --------------------------------------------------
+elif selected_page == "Knowledge Base":
+
+    st.title("📚 IoT Document Knowledge Base")
+
+    st.write(
+        "Add PDF manuals and technical documents to your "
+        "EdgeSight AI assistant."
+    )
+
+    st.info(
+        "Place your PDF, TXT or Markdown files inside the "
+        "documents folder in your project."
+    )
+
+    document_count = get_knowledge_base_count()
+
+    col1, col2 = st.columns(2)
+
+    col1.metric(
+        "Indexed Document Chunks",
+        document_count
+    )
+
+    documents_folder = "documents"
+
+    from pathlib import Path
+
+    document_files = []
+
+    for extension in ["*.pdf", "*.txt", "*.md"]:
+        document_files.extend(
+            Path(documents_folder).glob(extension)
+        )
+
+    col2.metric(
+        "Files Available",
+        len(document_files)
+    )
+
+    st.subheader("Available Documents")
+
+    if document_files:
+        for file in document_files:
+            st.write(f"📄 {file.name}")
+    else:
+        st.warning(
+            "No documents found. Add a PDF or text file "
+            "to your documents folder."
+        )
+
+    st.divider()
+
+    if st.button(
+        "🔄 Index / Update Documents",
+        use_container_width=True
+    ):
+
+        with st.spinner(
+            "Reading documents and creating embeddings..."
+        ):
+
+            try:
+                result = index_documents()
+
+                if result["success"]:
+                    st.success(result["message"])
+
+                    st.write(
+                        f"Files processed: {result['files']}"
+                    )
+
+                    st.write(
+                        f"Chunks indexed: {result['chunks']}"
+                    )
+
+                    st.rerun()
+
+                else:
+                    st.warning(result["message"])
+
+            except Exception as error:
+                st.error(
+                    f"Document indexing failed: {error}"
+                )
+
+    st.caption(
+        "After adding or changing documents, run indexing "
+        "again before asking questions about them."
+    )
