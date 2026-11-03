@@ -1,4 +1,9 @@
-python
 streamlit
 pandas
 plotly
+chromadb
+ollama
+pypdf
+fastapi
+uvicorn
+itsdangerous

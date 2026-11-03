@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EdgeSight Query Nexus</title>
+<style>
+:root{--bg:#fff;--side:#f9f9f9;--panel:#f4f4f4;--hover:#ececec;--line:#e5e5e5;--text:#0d0d0d;--mute:#6b6b6b;--accent:#10a37f;--accent-t:#fff;--user:#f0f0f0;--code:#0f172a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#212121;--side:#171717;--panel:#2f2f2f;--hover:#2a2a2a;--line:#3a3a3a;--text:#ececec;--mute:#9b9b9b;--user:#2f2f2f;--code:#0b0f19;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#212121;--side:#171717;--panel:#2f2f2f;--hover:#2a2a2a;--line:#3a3a3a;--text:#ececec;--mute:#9b9b9b;--user:#2f2f2f;--code:#0b0f19;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .25s,color .25s}
+button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hide{display:none!important}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;font-weight:600;transition:.2s}
+.btn.pri{background:var(--text);color:var(--bg)}.btn.pri:hover{opacity:.85}
+.btn.sec{border:1px solid var(--line)}.btn.sec:hover{background:var(--hover)}
+.ib{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--mute);transition:.2s}.ib:hover{background:var(--hover);color:var(--text)}
+/* About */
+#about{min-height:100%;display:flex;flex-direction:column}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+.logo b{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center}
+.hero{text-align:center;max-width:760px;margin:80px auto 40px;padding:0 20px}
+.hero h1{font-size:clamp(32px,6vw,54px);line-height:1.1;margin:0 0 18px;letter-spacing:-.02em}
+.hero p{color:var(--mute);font-size:18px;margin:0 0 28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:960px;margin:0 auto 60px;padding:0 20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card svg{color:var(--accent);margin-bottom:8px;width:24px;height:24px}.card h3{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--mute);font-size:14px}
+/* Modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50;padding:16px;animation:f .2s}
+@keyframes f{from{opacity:0}}
+.modal{background:var(--bg);border:1px solid var(--line);border-radius:20px;width:100%;max-width:400px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal h2{margin:0 0 4px;font-size:21px}.modal .sub{color:var(--mute);margin:0 0 18px;font-size:14px}
+.tabs{display:flex;background:var(--panel);border-radius:12px;padding:4px;margin-bottom:16px}
+.tabs button{flex:1;padding:8px;border-radius:9px;color:var(--mute);font-weight:600;transition:.2s}
+.tabs button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.fld{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);margin-bottom:10px;outline:0}.fld:focus{border-color:var(--accent)}
+.modal .btn{width:100%;justify-content:center}
+/* App */
+#app{display:flex;height:100vh;height:100dvh}
+.side{width:268px;background:var(--side);display:flex;flex-direction:column;padding:10px;transition:margin .25s;flex:none}
+.side.off{margin-left:-268px}
+.newc{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:10px;font-weight:500}.newc:hover{background:var(--hover)}
+.hist{flex:1;overflow:auto;margin:8px 0}
+.grp{padding:12px 10px 4px;font-size:12px;font-weight:600;color:var(--mute);display:flex;justify-content:space-between;cursor:pointer;user-select:none}
+.item{padding:8px 10px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-size:14px}.item:hover,.item.on{background:var(--hover)}
+.prof{position:relative;border-top:1px solid var(--line);padding-top:10px}
+.pw{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:10px;text-align:left}.pw:hover{background:var(--hover)}
+.av{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}.av img{width:100%;height:100%;object-fit:cover}
+.pw small{display:block;color:var(--mute);font-size:12px;line-height:1.2}
+.menu{position:absolute;bottom:62px;left:0;right:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.menu button{display:flex;gap:10px;align-items:center;width:100%;padding:9px 10px;border-radius:8px;text-align:left}.menu button:hover{background:var(--hover)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:6px;padding:10px 14px}
+.top select{background:none;border:0;font-weight:600;font-size:16px;padding:6px 8px;border-radius:8px;cursor:pointer;outline:0}.top select:hover{background:var(--hover)}
+.top select option{background:var(--bg)}
+.msgs{flex:1;overflow:auto}
+.col{max-width:760px;margin:0 auto;padding:0 20px}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+.empty h2{margin:0;font-size:28px}.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--mute)}.chip:hover{background:var(--hover);color:var(--text)}
+.m{display:flex;margin:22px 0;animation:u .25s}@keyframes u{from{opacity:0;transform:translateY(6px)}}
+.m.user{justify-content:flex-end}.m.user .b{background:var(--user);padding:10px 18px;border-radius:22px;max-width:80%;white-space:pre-wrap}
+.m.ai{gap:12px}.m.ai .av{width:30px;height:30px;font-size:12px}.m.ai .b{flex:1;min-width:0}
+.b p{margin:0 0 10px}.b ul,.b ol{margin:0 0 10px;padding-left:22px}.b h3,.b h4{margin:14px 0 6px}
+.b code{background:var(--panel);padding:2px 6px;border-radius:6px;font-size:13px}
+.cb{background:var(--code);border-radius:12px;margin:10px 0;overflow:hidden;color:#e2e8f0}
+.cb .h{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:rgba(255,255,255,.07);font-size:12px;color:#94a3b8}
+.cb .h button{color:#94a3b8;display:flex;gap:6px;align-items:center;font-size:12px}
+.cb pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}.cb code{background:none;padding:0}
+.k{color:#c084fc}.s{color:#86efac}.c{color:#64748b}.n{color:#fdba74}
+.acts{display:flex;gap:2px;margin-top:4px}.acts .ib{width:30px;height:30px}.acts .ib.on{color:var(--accent)}
+.dots span{display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:var(--mute);animation:d 1s infinite}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes d{50%{opacity:.2}}
+.inw{padding:0 20px 8px}
+.box{max-width:760px;margin:0 auto;background:var(--panel);border-radius:26px;padding:8px 10px;display:flex;align-items:flex-end;gap:4px;border:1px solid transparent;transition:.2s}.box:focus-within{border-color:var(--line)}
+.box textarea{flex:1;background:none;border:0;outline:0;resize:none;max-height:200px;padding:8px 6px;line-height:1.5}
+.send{width:34px;height:34px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center;transition:.2s}.send:disabled{opacity:.25;cursor:default}
+.ws.on{color:var(--accent);background:var(--hover)}
+.disc{text-align:center;font-size:12px;color:var(--mute);padding:6px 0 4px}
+.att{max-width:760px;margin:0 auto 6px;font-size:13px;color:var(--mute)}
+/* Settings */
+.set{max-width:680px;max-height:86vh;display:flex;padding:0;overflow:hidden}.set nav{width:170px;padding:14px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;flex:none}
+.set nav button{text-align:left;padding:9px 12px;border-radius:9px;display:flex;gap:8px;align-items:center}.set nav button.on,.set nav button:hover{background:var(--hover)}
+.set .pane{flex:1;padding:22px;overflow:auto}.set h3{margin:0 0 14px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.row small{display:block;color:var(--mute)}
+.tg{width:42px;height:24px;border-radius:99px;background:var(--hover);border:1px solid var(--line);position:relative;transition:.2s;flex:none}.tg::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--mute);transition:.2s}.tg.on{background:var(--accent)}.tg.on::after{left:20px;background:#fff}
+.pane textarea.fld{min-height:110px;resize:vertical}
+@media(max-width:720px){.side{position:fixed;z-index:30;height:100%;box-shadow:4px 0 30px rgba(0,0,0,.3)}.set{flex-direction:column}.set nav{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="nav">
+    <div class="logo"><b>E</b>EdgeSight Query Nexus</div>
+    <div style="display:flex;gap:8px"><button class="ib" onclick="toggleTheme()" title="Toggle theme" data-i="sun"></button><button class="btn pri" onclick="openLogin()">See Inside <span data-i="arrow"></span></button></div>
+  </div>
+  <div class="hero">
+    <h1>Ask your industrial data anything.</h1>
+    <p>EdgeSight combines your IoT sensor records with technical manuals, so maintenance teams get grounded, cited answers in plain language.</p>
+    <button class="btn pri" onclick="openLogin()">See Inside <span data-i="arrow"></span></button>
+  </div>
+  <div class="cards">
+    <div class="card"><span data-i="chart"></span><h3>Live dataset analytics</h3><p>Health scores, vibration, bearing temperature, failures and maintenance windows, calculated with Pandas.</p></div>
+    <div class="card"><span data-i="book"></span><h3>Document-aware RAG</h3><p>PDF, TXT and Markdown manuals are indexed in ChromaDB and cited by filename and page.</p></div>
+    <div class="card"><span data-i="shield"></span><h3>Private by design</h3><p>Runs locally on Ollama with role-based access, so your operational data stays on your hardware.</p></div>
+  </div>
+</section>
+
+<!-- LOGIN -->
+<div class="ov hide" id="login" onclick="if(event.target===this)closeLogin()">
+  <div class="modal">
+    <h2>Welcome back</h2><p class="sub">Choose a role to sign in.</p>
+    <div class="tabs"><button class="on" data-role="User" onclick="pickRole(this)">User</button><button data-role="Admin" onclick="pickRole(this)">Admin</button></div>
+    <input class="fld" id="lu" placeholder="Username" value="demo_user">
+    <input class="fld" id="lp" type="password" placeholder="Password" value="demo1234">
+    <button class="btn pri" onclick="doLogin()">Sign in</button>
+    <p class="sub" style="text-align:center;margin:12px 0 0">Demo mode: any credentials work.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hide">
+  <aside class="side" id="side">
+    <div style="display:flex;justify-content:space-between"><button class="newc" onclick="newChat()"><span data-i="edit"></span>New chat</button></div>
+    <div class="hist" id="hist"></div>
+    <div class="prof">
+      <div class="menu hide" id="menu">
+        <button onclick="$('file').click()"><span data-i="img"></span>Change profile image</button>
+        <button onclick="openSettings()"><span data-i="gear"></span>Settings</button>
+        <button onclick="toggleTheme()"><span data-i="sun"></span>Toggle theme</button>
+        <button onclick="logout()"><span data-i="out"></span>Log out</button>
+      </div>
+      <button class="pw" onclick="$('menu').classList.toggle('hide')">
+        <div class="av" id="av"></div><div style="flex:1;min-width:0"><b id="pn"></b><small id="pr"></small></div><span data-i="dots"></span>
+      </button>
+      <input type="file" id="file" accept="image/*" class="hide" onchange="setAvatar(this)">
+    </div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <button class="ib" onclick="$('side').classList.toggle('off')" title="Toggle sidebar" data-i="panel"></button>
+      <select id="model"><option>llama3.2 (local)</option><option>GPT-4o</option><option>Claude 3.5 Sonnet</option><option>Custom: edgesight-rag</option></select>
+      <span style="flex:1"></span>
+      <button class="ib" onclick="toggleTheme()" title="Toggle theme" data-i="sun"></button>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="inw">
+      <div class="att hide" id="att"></div>
+      <div class="box">
+        <button class="ib" onclick="$('upl').click()" title="Attach file" data-i="clip"></button>
+        <input type="file" id="upl" class="hide" onchange="attach(this)">
+        <button class="ib ws" id="ws" onclick="this.classList.toggle('on')" title="Web search" data-i="globe"></button>
+        <textarea id="inp" rows="1" placeholder="Ask about assets, health scores, manuals…"></textarea>
+        <button class="send" id="send" disabled onclick="send()" data-i="up"></button>
+      </div>
+      <div class="disc">EdgeSight can make mistakes. Verify critical maintenance decisions against source documents.</div>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS -->
+<div class="ov hide" id="settings" onclick="if(event.target===this)this.classList.add('hide')">
+  <div class="modal set">
+    <nav id="snav"></nav><div class="pane" id="pane"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const P={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',chart:'<path d="M3 3v18h18M7 15l4-4 3 3 5-6"/>',book:'<path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4zM4 16a4 4 0 0 1 4-4h12"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',clip:'<path d="M21 12l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6L15 7.4"/>',globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',up:'<path d="M12 19V5M5 12l7-7 7 7"/>',copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',redo:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',up2:'<path d="M7 10v12M15 5.9L14 10h5.8a2 2 0 0 1 1.9 2.5l-2.3 8a2 2 0 0 1-1.9 1.5H7V10l4-8a3 3 0 0 1 4 3.9z"/>',dn2:'<path d="M17 14V2M9 18.1L10 14H4.2a2 2 0 0 1-1.9-2.5l2.3-8A2 2 0 0 1 6.5 2H17v12l-4 8a3 3 0 0 1-4-3.9z"/>',chev:'<path d="M6 9l6 6 6-6"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',srv:'<rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><path d="M6 7h.01M6 17h.01"/>'};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24">${P[n]}</svg>`;
+const paint=r=>(r||document).querySelectorAll('[data-i]').forEach(e=>{if(!e.firstChild)e.innerHTML=ic(e.dataset.i)});
+paint();
+
+/* theme */
+function toggleTheme(){const d=document.documentElement;const dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;d.dataset.theme=dark?'light':'dark'}
+async function api(url,method='GET',body){
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){logout(true);throw new Error('auth')}
+  return r.json();
+}
+function groupOf(ts){
+  const d=(Date.now()-new Date(ts.replace(' ','T')+'Z'))/864e5;
+  return d<1?'Today':d<7?'Previous 7 days':d<30?'Previous 30 days':'Older';
+}
+async function loadChats(){
+  const list=await api('/api/conversations');
+  chats=list.map(c=>({id:c.conversation_id,t:c.title,g:groupOf(c.updated_at),m:null}));
+}
+function enterApp(u){
+  user={name:u.username,role:u.role==='admin'?'Admin':'User'};
+  $('about').classList.add('hide');$('app').classList.remove('hide');
+  renderProfile();loadChats().then(newChat);
+}
+api('/api/me').then(u=>{if(u.user_id)enterApp(u)}).catch(()=>{});
+/* auth */
+let role='User',user=null,avatar=null,chats=[],cur=null,collapsed={};
+function openLogin(){$('login').classList.remove('hide')}
+function closeLogin(){$('login').classList.add('hide')}
+function pickRole(b){role=b.dataset.role;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('lu').value=role==='Admin'?'admin':'demo_user'}
+async function doLogin(){
+  const u=await api('/api/login','POST',{username:$('lu').value,password:$('lp').value});
+  if(u.error){alert(u.error);return}
+  closeLogin();enterApp(u);
+}
+function logout(silent){
+  if(silent!==true)fetch('/api/logout',{method:'POST'});
+  user=null;avatar=null;chats=[];cur=null;
+  $('menu').classList.add('hide');$('settings').classList.add('hide');
+  $('app').classList.add('hide');$('about').classList.remove('hide');
+}
+function setAvatar(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{avatar=r.result;renderProfile();$('menu').classList.add('hide')};r.readAsDataURL(f)}
+
+/* sidebar */
+function renderHist(){
+  const gs=[...new Set(chats.map(c=>c.g))];
+  $('hist').innerHTML=gs.map(g=>`<div class="grp" onclick="collapsed['${g}']=!collapsed['${g}'];renderHist()">${g}<span style="transform:rotate(${collapsed[g]?-90:0}deg);transition:.2s">${ic('chev')}</span></div>`+(collapsed[g]?'':chats.filter(c=>c.g===g).map(c=>`<div class="item ${c===cur?'on':''}" onclick="openChat(${c.id})">${esc(c.t)}</div>`).join(''))).join('');
+}
+function newChat(){cur=null;renderHist();renderMsgs()}
+async function openChat(id){
+  cur=chats.find(c=>c.id===id);
+  if(cur.m===null){
+    const rows=await api('/api/conversations/'+id);
+    cur.m=rows.map(r=>({r:r.role==='assistant'?'ai':'user',c:r.content}));
+  }
+  renderHist();renderMsgs();
+  if(innerWidth<720)$('side').classList.add('off');
+}
+/* markdown */
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function hl(code){return esc(code).replace(/(#.*$)|("[^"\n]*"|'[^'\n]*')|\b(def|return|import|from|if|else|for|in|None|True|False|print)\b|\b(\d+\.?\d*)\b/gm,(m,c,s,k,n)=>c?`<span class="c">${c}</span>`:s?`<span class="s">${s}</span>`:k?`<span class="k">${k}</span>`:`<span class="n">${n}</span>`)}
+function md(t){
+  const blocks=[];t=t.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>{blocks.push(`<div class="cb"><div class="h"><span>${l||'code'}</span><button onclick="cp(this)">${ic('copy')}Copy</button></div><pre><code>${hl(c.trimEnd())}</code></pre></div>`);return`\u0000${blocks.length-1}\u0000`});
+  let h=esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^## (.*)$/gm,'<h3>$1</h3>').replace(/((?:^[-*] .*(?:\n|$))+)/gm,m=>'<ul>'+m.trim().split('\n').map(l=>'<li>'+l.slice(2)+'</li>').join('')+'</ul>').replace(/((?:^\d+\. .*(?:\n|$))+)/gm,m=>'<ol>'+m.trim().split('\n').map(l=>'<li>'+l.replace(/^\d+\. /,'')+'</li>').join('')+'</ol>');
+  h=h.split(/\n{2,}/).map(p=>/^<(ul|ol|h\d)|^\u0000/.test(p.trim())?p:`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  return h.replace(/\u0000(\d+)\u0000/g,(_,i)=>blocks[i]);
+}
+function cp(b){navigator.clipboard&&navigator.clipboard.writeText(b.closest('.cb').querySelector('code').textContent).catch(()=>{})}
+
+/* messages */
+const sugg=['How many unique assets are there?','Show the average health score','Which maintenance is due?','Give me a Python filter for failures'];
+function renderMsgs(){
+  const el=$('msgs');
+  if(!cur||!cur.m.length){el.innerHTML=`<div class="empty"><div class="av" style="width:48px;height:48px;font-size:20px">E</div><h2>What can I help you analyze?</h2><div class="chips">${sugg.map(s=>`<button class="chip" onclick="ask(this.textContent)">${s}</button>`).join('')}</div></div>`;return}
+  el.innerHTML='<div class="col">'+cur.m.map(msgHTML).join('')+'</div>';el.scrollTop=el.scrollHeight;
+}
+function msgHTML(m,i){
+  if(m.r==='user')return`<div class="m user"><div class="b">${esc(m.c)}</div></div>`;
+  return`<div class="m ai"><div class="av">E</div><div class="b">${md(m.c)}<div class="acts"><button class="ib" title="Copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(cur.m[${i}].c).catch(()=>{})">${ic('copy')}</button><button class="ib" title="Regenerate" onclick="regen()">${ic('redo')}</button><button class="ib" onclick="this.classList.toggle('on')">${ic('up2')}</button><button class="ib" onclick="this.classList.toggle('on')">${ic('dn2')}</button></div></div></div>`;
+}
+function reply(q){
+  q=q.toLowerCase();
+  if(/code|python|filter|script/.test(q))return"Here is a small Pandas helper that mirrors the logic in `analytics.py`:\n\n```python\ndef find_recorded_failures(df):\n    # Normalize text, then match yes/true/1\n    values = df[\"unscheduled_failure_within_7d\"].astype(str).str.strip().str.casefold()\n    return df[values.isin([\"yes\", \"true\", \"1\"])]\n```\n\nIt treats the column as **recorded data**, so it reports past records rather than predicting future failures.";
+  if(/health/.test(q))return"## Average health score\n\nThe **dataset analytics** report the average `ai_health_index_score` after ignoring non-numeric values.\n\n- Lowest and highest scores are included in the dataset summary\n- Scores are *recorded* values, not live readings\n\nConnect the backend (`generate_rag_answer`) to see the real figures here.";
+  if(/maint|pm/.test(q))return"Records flagged in `scheduled_pm_due_within_7d` are counted as **maintenance due within 7 days**.\n\n1. Filter records where the flag is yes/true/1\n2. Group by `asset_type`\n3. Review assets with high vibration first\n\nWould you like me to draft that filter?";
+  if(/asset|record|how many/.test(q))return"The dataset summary lists **total records** and **unique asset IDs** separately, since one asset can appear in many observations.\n\nThis is demo output; wire the UI to your Python backend for exact counts.";
+  return"I can answer from two sources:\n\n- **Dataset analytics**: counts, health, temperature, vibration, failures\n- **Manuals**: indexed documents, cited by filename and page\n\nTry asking about assets, health scores or maintenance.";
+}
+function ask(t){$('inp').value=t;grow();send()}
+let busy=false;
+function send(){
+  const t=$('inp').value.trim();if(!t||busy)return;
+  if(!cur){cur={id:null,t:t.slice(0,40),g:'Today',m:[]};chats.unshift(cur);renderHist()}
+  cur=({r:'user',c:t});$('inp').value='';grow();$('att').classList.add('hide');renderHist();respond(t);
+}
+function regen(){const l=[...cur.m].reverse().find(m=>m.r==='user');if(!l||busy)return;if(cur.m[cur.m.length-1].r==='ai')cur.m.pop();respond(l.c,false)}
+async function respond(q,saveUser=true){
+  busy=true;renderMsgs();
+  document.querySelector('.col').insertAdjacentHTML('beforeend','<div class="m ai"><div class="av">E</div><div class="b dots"><span></span><span></span><span></span></div></div>');
+  $('msgs').scrollTop=1e9;
+  let answer;
+  try{
+    const r=await api('/api/chat','POST',{question:q,conversation_id:cur.id,save_user:saveUser});
+    answer=r.answer;cur.id=r.conversation_id;
+  }catch(e){answer='Could not reach the server. Check that uvicorn and Ollama are running.'}
+  cur.m.push({r:'ai',c:answer});busy=false;renderHist();renderMsgs();
+}
+const inp=$('inp');
+function grow(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,200)+'px';$('send').disabled=!inp.value.trim()}
+inp.addEventListener('input',grow);
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+function attach(i){const f=i.files[0];if(!f)return;const a=$('att');a.textContent='📎 '+f.name;a.classList.remove('hide')}
+
+/* settings */
+let tab='General';
+function openSettings(){$('menu').classList.add('hide');$('settings').classList.remove('hide');renderSettings()}
+function tg(on){return`<div class="tg ${on?'on':''}" onclick="this.classList.toggle('on')"></div>`}
+function renderSettings(){
+  const tabs=[['General','gear'],['Data Controls','db']];if(user.role==='Admin')tabs.push(['System','srv']);
+  $('snav').innerHTML=tabs.map(([n,i])=>`<button class="${n===tab?'on':''}" onclick="tab='${n}';renderSettings()">${ic(i)}${n}</button>`).join('');
+  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+  const rows={
+    General:`<h3>General</h3><div class="row"><div>Dark mode<small>Switch between light and dark themes</small></div><div class="tg ${dark?'on':''}" onclick="toggleTheme();this.classList.toggle('on')"></div></div><p style="margin:16px 0 6px">Custom instructions</p><textarea class="fld" placeholder="e.g. Always cite document filenames and page numbers."></textarea>`,
+    'Data Controls':`<h3>Data controls</h3><div class="row"><div>Save chat history<small>Store conversations in SQLite</small></div>${tg(1)}</div><div class="row"><div>Export chats<small>Download all conversations</small></div><button class="btn sec">Export</button></div><div class="row"><div>Delete all chats<small>This cannot be undone</small></div><button class="btn sec" style="color:#ef4444" onclick="deleteAll()">Delete</button></div>`,
+    System:`<h3>System settings</h3><div class="row"><div>Chat model<small>Ollama</small></div><b>llama3.2</b></div><div class="row"><div>Embedding model<small>Ollama</small></div><b>nomic-embed-text</b></div><div class="row"><div>Re-index documents<small>Rebuild the ChromaDB knowledge base</small></div><button class="btn sec" onclick="adminCall('/api/admin/reindex',this,'Indexed ✓')">Re-index</button></div><div class="row"><div>Refresh dataset<small>Reload SQLite from the latest CSV</small></div><button class="btn sec" onclick="adminCall('/api/admin/refresh',this,'Refreshed ✓')">Refresh</button></div><div class="row"><div>Allow new registrations</div>${tg(1)}</div>`
+  };
+  $('pane').innerHTML=rows[tab];
+}
+paint();
+async function deleteAll(){
+  for(const c of chats)await api('/api/conversations/'+c.id,'DELETE');
+  chats=[];newChat();$('settings').classList.add('hide');
+}
+async function adminCall(url,btn,done){
+  btn.textContent='Working…';btn.disabled=true;
+  await api(url,'POST');btn.textContent=done;btn.disabled=false;
+}
+</script>
+</body>
+</html>

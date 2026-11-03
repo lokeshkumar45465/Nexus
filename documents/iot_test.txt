@@ -1,0 +1,16 @@
+EdgeSight IoT Equipment Maintenance Guide
+
+Bearing temperature is an important parameter
+for monitoring industrial equipment.
+
+High bearing temperatures may indicate friction,
+lubrication problems, or mechanical wear.
+
+Vibration monitoring helps identify abnormal
+equipment movement.
+
+Regular preventive maintenance helps reduce
+equipment downtime.
+
+Equipment health scores are used to summarize
+the recorded condition of industrial assets.
