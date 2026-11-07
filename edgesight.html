@@ -3,313 +3,235 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>EdgeSight Query Nexus</title>
-<style>
-:root{--bg:#fff;--side:#f9f9f9;--panel:#f4f4f4;--hover:#ececec;--line:#e5e5e5;--text:#0d0d0d;--mute:#6b6b6b;--accent:#10a37f;--accent-t:#fff;--user:#f0f0f0;--code:#0f172a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#212121;--side:#171717;--panel:#2f2f2f;--hover:#2a2a2a;--line:#3a3a3a;--text:#ececec;--mute:#9b9b9b;--user:#2f2f2f;--code:#0b0f19;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#212121;--side:#171717;--panel:#2f2f2f;--hover:#2a2a2a;--line:#3a3a3a;--text:#ececec;--mute:#9b9b9b;--user:#2f2f2f;--code:#0b0f19;color-scheme:dark}
-*{box-sizing:border-box}html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .25s,color .25s}
-button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}
-svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.hide{display:none!important}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;font-weight:600;transition:.2s}
-.btn.pri{background:var(--text);color:var(--bg)}.btn.pri:hover{opacity:.85}
-.btn.sec{border:1px solid var(--line)}.btn.sec:hover{background:var(--hover)}
-.ib{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--mute);transition:.2s}.ib:hover{background:var(--hover);color:var(--text)}
-/* About */
-#about{min-height:100%;display:flex;flex-direction:column}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--line)}
-.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
-.logo b{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center}
-.hero{text-align:center;max-width:760px;margin:80px auto 40px;padding:0 20px}
-.hero h1{font-size:clamp(32px,6vw,54px);line-height:1.1;margin:0 0 18px;letter-spacing:-.02em}
-.hero p{color:var(--mute);font-size:18px;margin:0 0 28px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:960px;margin:0 auto 60px;padding:0 20px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
-.card svg{color:var(--accent);margin-bottom:8px;width:24px;height:24px}.card h3{margin:0 0 6px;font-size:16px}.card p{margin:0;color:var(--mute);font-size:14px}
-/* Modal */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50;padding:16px;animation:f .2s}
-@keyframes f{from{opacity:0}}
-.modal{background:var(--bg);border:1px solid var(--line);border-radius:20px;width:100%;max-width:400px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
-.modal h2{margin:0 0 4px;font-size:21px}.modal .sub{color:var(--mute);margin:0 0 18px;font-size:14px}
-.tabs{display:flex;background:var(--panel);border-radius:12px;padding:4px;margin-bottom:16px}
-.tabs button{flex:1;padding:8px;border-radius:9px;color:var(--mute);font-weight:600;transition:.2s}
-.tabs button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
-.fld{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);margin-bottom:10px;outline:0}.fld:focus{border-color:var(--accent)}
-.modal .btn{width:100%;justify-content:center}
-/* App */
-#app{display:flex;height:100vh;height:100dvh}
-.side{width:268px;background:var(--side);display:flex;flex-direction:column;padding:10px;transition:margin .25s;flex:none}
-.side.off{margin-left:-268px}
-.newc{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:10px;font-weight:500}.newc:hover{background:var(--hover)}
-.hist{flex:1;overflow:auto;margin:8px 0}
-.grp{padding:12px 10px 4px;font-size:12px;font-weight:600;color:var(--mute);display:flex;justify-content:space-between;cursor:pointer;user-select:none}
-.item{padding:8px 10px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-size:14px}.item:hover,.item.on{background:var(--hover)}
-.prof{position:relative;border-top:1px solid var(--line);padding-top:10px}
-.pw{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:10px;text-align:left}.pw:hover{background:var(--hover)}
-.av{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}.av img{width:100%;height:100%;object-fit:cover}
-.pw small{display:block;color:var(--mute);font-size:12px;line-height:1.2}
-.menu{position:absolute;bottom:62px;left:0;right:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
-.menu button{display:flex;gap:10px;align-items:center;width:100%;padding:9px 10px;border-radius:8px;text-align:left}.menu button:hover{background:var(--hover)}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
-.top{display:flex;align-items:center;gap:6px;padding:10px 14px}
-.top select{background:none;border:0;font-weight:600;font-size:16px;padding:6px 8px;border-radius:8px;cursor:pointer;outline:0}.top select:hover{background:var(--hover)}
-.top select option{background:var(--bg)}
-.msgs{flex:1;overflow:auto}
-.col{max-width:760px;margin:0 auto;padding:0 20px}
-.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
-.empty h2{margin:0;font-size:28px}.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.chip{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;color:var(--mute)}.chip:hover{background:var(--hover);color:var(--text)}
-.m{display:flex;margin:22px 0;animation:u .25s}@keyframes u{from{opacity:0;transform:translateY(6px)}}
-.m.user{justify-content:flex-end}.m.user .b{background:var(--user);padding:10px 18px;border-radius:22px;max-width:80%;white-space:pre-wrap}
-.m.ai{gap:12px}.m.ai .av{width:30px;height:30px;font-size:12px}.m.ai .b{flex:1;min-width:0}
-.b p{margin:0 0 10px}.b ul,.b ol{margin:0 0 10px;padding-left:22px}.b h3,.b h4{margin:14px 0 6px}
-.b code{background:var(--panel);padding:2px 6px;border-radius:6px;font-size:13px}
-.cb{background:var(--code);border-radius:12px;margin:10px 0;overflow:hidden;color:#e2e8f0}
-.cb .h{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:rgba(255,255,255,.07);font-size:12px;color:#94a3b8}
-.cb .h button{color:#94a3b8;display:flex;gap:6px;align-items:center;font-size:12px}
-.cb pre{margin:0;padding:14px;overflow-x:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}.cb code{background:none;padding:0}
-.k{color:#c084fc}.s{color:#86efac}.c{color:#64748b}.n{color:#fdba74}
-.acts{display:flex;gap:2px;margin-top:4px}.acts .ib{width:30px;height:30px}.acts .ib.on{color:var(--accent)}
-.dots span{display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:var(--mute);animation:d 1s infinite}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
-@keyframes d{50%{opacity:.2}}
-.inw{padding:0 20px 8px}
-.box{max-width:760px;margin:0 auto;background:var(--panel);border-radius:26px;padding:8px 10px;display:flex;align-items:flex-end;gap:4px;border:1px solid transparent;transition:.2s}.box:focus-within{border-color:var(--line)}
-.box textarea{flex:1;background:none;border:0;outline:0;resize:none;max-height:200px;padding:8px 6px;line-height:1.5}
-.send{width:34px;height:34px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center;transition:.2s}.send:disabled{opacity:.25;cursor:default}
-.ws.on{color:var(--accent);background:var(--hover)}
-.disc{text-align:center;font-size:12px;color:var(--mute);padding:6px 0 4px}
-.att{max-width:760px;margin:0 auto 6px;font-size:13px;color:var(--mute)}
-/* Settings */
-.set{max-width:680px;max-height:86vh;display:flex;padding:0;overflow:hidden}.set nav{width:170px;padding:14px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;flex:none}
-.set nav button{text-align:left;padding:9px 12px;border-radius:9px;display:flex;gap:8px;align-items:center}.set nav button.on,.set nav button:hover{background:var(--hover)}
-.set .pane{flex:1;padding:22px;overflow:auto}.set h3{margin:0 0 14px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.row small{display:block;color:var(--mute)}
-.tg{width:42px;height:24px;border-radius:99px;background:var(--hover);border:1px solid var(--line);position:relative;transition:.2s;flex:none}.tg::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--mute);transition:.2s}.tg.on{background:var(--accent)}.tg.on::after{left:20px;background:#fff}
-.pane textarea.fld{min-height:110px;resize:vertical}
-@media(max-width:720px){.side{position:fixed;z-index:30;height:100%;box-shadow:4px 0 30px rgba(0,0,0,.3)}.set{flex-direction:column}.set nav{width:auto;flex-direction:row;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}}
-</style>
+<title>Edge Sight Query Nexus</title>
+<script>if(matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.classList.add('dark')</script>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body,#root{height:100%;margin:0}body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .25s,color .25s}</style>
 </head>
-<body>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="nav">
-    <div class="logo"><b>E</b>EdgeSight Query Nexus</div>
-    <div style="display:flex;gap:8px"><button class="ib" onclick="toggleTheme()" title="Toggle theme" data-i="sun"></button><button class="btn pri" onclick="openLogin()">See Inside <span data-i="arrow"></span></button></div>
-  </div>
-  <div class="hero">
-    <h1>Ask your industrial data anything.</h1>
-    <p>EdgeSight combines your IoT sensor records with technical manuals, so maintenance teams get grounded, cited answers in plain language.</p>
-    <button class="btn pri" onclick="openLogin()">See Inside <span data-i="arrow"></span></button>
-  </div>
-  <div class="cards">
-    <div class="card"><span data-i="chart"></span><h3>Live dataset analytics</h3><p>Health scores, vibration, bearing temperature, failures and maintenance windows, calculated with Pandas.</p></div>
-    <div class="card"><span data-i="book"></span><h3>Document-aware RAG</h3><p>PDF, TXT and Markdown manuals are indexed in ChromaDB and cited by filename and page.</p></div>
-    <div class="card"><span data-i="shield"></span><h3>Private by design</h3><p>Runs locally on Ollama with role-based access, so your operational data stays on your hardware.</p></div>
-  </div>
-</section>
-
-<!-- LOGIN -->
-<div class="ov hide" id="login" onclick="if(event.target===this)closeLogin()">
-  <div class="modal">
-    <h2>Welcome back</h2><p class="sub">Choose a role to sign in.</p>
-    <div class="tabs"><button class="on" data-role="User" onclick="pickRole(this)">User</button><button data-role="Admin" onclick="pickRole(this)">Admin</button></div>
-    <input class="fld" id="lu" placeholder="Username" value="demo_user">
-    <input class="fld" id="lp" type="password" placeholder="Password" value="demo1234">
-    <button class="btn pri" onclick="doLogin()">Sign in</button>
-    <p class="sub" style="text-align:center;margin:12px 0 0">Demo mode: any credentials work.</p>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app" class="hide">
-  <aside class="side" id="side">
-    <div style="display:flex;justify-content:space-between"><button class="newc" onclick="newChat()"><span data-i="edit"></span>New chat</button></div>
-    <div class="hist" id="hist"></div>
-    <div class="prof">
-      <div class="menu hide" id="menu">
-        <button onclick="$('file').click()"><span data-i="img"></span>Change profile image</button>
-        <button onclick="openSettings()"><span data-i="gear"></span>Settings</button>
-        <button onclick="toggleTheme()"><span data-i="sun"></span>Toggle theme</button>
-        <button onclick="logout()"><span data-i="out"></span>Log out</button>
-      </div>
-      <button class="pw" onclick="$('menu').classList.toggle('hide')">
-        <div class="av" id="av"></div><div style="flex:1;min-width:0"><b id="pn"></b><small id="pr"></small></div><span data-i="dots"></span>
-      </button>
-      <input type="file" id="file" accept="image/*" class="hide" onchange="setAvatar(this)">
-    </div>
-  </aside>
-  <main class="main">
-    <div class="top">
-      <button class="ib" onclick="$('side').classList.toggle('off')" title="Toggle sidebar" data-i="panel"></button>
-      <select id="model"><option>llama3.2 (local)</option><option>GPT-4o</option><option>Claude 3.5 Sonnet</option><option>Custom: edgesight-rag</option></select>
-      <span style="flex:1"></span>
-      <button class="ib" onclick="toggleTheme()" title="Toggle theme" data-i="sun"></button>
-    </div>
-    <div class="msgs" id="msgs"></div>
-    <div class="inw">
-      <div class="att hide" id="att"></div>
-      <div class="box">
-        <button class="ib" onclick="$('upl').click()" title="Attach file" data-i="clip"></button>
-        <input type="file" id="upl" class="hide" onchange="attach(this)">
-        <button class="ib ws" id="ws" onclick="this.classList.toggle('on')" title="Web search" data-i="globe"></button>
-        <textarea id="inp" rows="1" placeholder="Ask about assets, health scores, manuals…"></textarea>
-        <button class="send" id="send" disabled onclick="send()" data-i="up"></button>
-      </div>
-      <div class="disc">EdgeSight can make mistakes. Verify critical maintenance decisions against source documents.</div>
-    </div>
-  </main>
-</div>
-
-<!-- SETTINGS -->
-<div class="ov hide" id="settings" onclick="if(event.target===this)this.classList.add('hide')">
-  <div class="modal set">
-    <nav id="snav"></nav><div class="pane" id="pane"></div>
-  </div>
-</div>
-
-<script>
-const $=id=>document.getElementById(id);
-const P={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',chart:'<path d="M3 3v18h18M7 15l4-4 3 3 5-6"/>',book:'<path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4zM4 16a4 4 0 0 1 4-4h12"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',clip:'<path d="M21 12l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6L15 7.4"/>',globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',up:'<path d="M12 19V5M5 12l7-7 7 7"/>',copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',redo:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',up2:'<path d="M7 10v12M15 5.9L14 10h5.8a2 2 0 0 1 1.9 2.5l-2.3 8a2 2 0 0 1-1.9 1.5H7V10l4-8a3 3 0 0 1 4 3.9z"/>',dn2:'<path d="M17 14V2M9 18.1L10 14H4.2a2 2 0 0 1-1.9-2.5l2.3-8A2 2 0 0 1 6.5 2H17v12l-4 8a3 3 0 0 1-4-3.9z"/>',chev:'<path d="M6 9l6 6 6-6"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',srv:'<rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><path d="M6 7h.01M6 17h.01"/>'};
-const ic=n=>`<svg class="i" viewBox="0 0 24 24">${P[n]}</svg>`;
-const paint=r=>(r||document).querySelectorAll('[data-i]').forEach(e=>{if(!e.firstChild)e.innerHTML=ic(e.dataset.i)});
-paint();
-
-/* theme */
-function toggleTheme(){const d=document.documentElement;const dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;d.dataset.theme=dark?'light':'dark'}
-async function api(url,method='GET',body){
-  const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
-  if(r.status===401){logout(true);throw new Error('auth')}
-  return r.json();
-}
-function groupOf(ts){
-  const d=(Date.now()-new Date(ts.replace(' ','T')+'Z'))/864e5;
-  return d<1?'Today':d<7?'Previous 7 days':d<30?'Previous 30 days':'Older';
-}
-async function loadChats(){
-  const list=await api('/api/conversations');
-  chats=list.map(c=>({id:c.conversation_id,t:c.title,g:groupOf(c.updated_at),m:null}));
-}
-function enterApp(u){
-  user={name:u.username,role:u.role==='admin'?'Admin':'User'};
-  $('about').classList.add('hide');$('app').classList.remove('hide');
-  renderProfile();loadChats().then(newChat);
-}
-api('/api/me').then(u=>{if(u.user_id)enterApp(u)}).catch(()=>{});
-/* auth */
-let role='User',user=null,avatar=null,chats=[],cur=null,collapsed={};
-function openLogin(){$('login').classList.remove('hide')}
-function closeLogin(){$('login').classList.add('hide')}
-function pickRole(b){role=b.dataset.role;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('lu').value=role==='Admin'?'admin':'demo_user'}
-async function doLogin(){
-  const u=await api('/api/login','POST',{username:$('lu').value,password:$('lp').value});
-  if(u.error){alert(u.error);return}
-  closeLogin();enterApp(u);
-}
-function logout(silent){
-  if(silent!==true)fetch('/api/logout',{method:'POST'});
-  user=null;avatar=null;chats=[];cur=null;
-  $('menu').classList.add('hide');$('settings').classList.add('hide');
-  $('app').classList.add('hide');$('about').classList.remove('hide');
-}
-function setAvatar(i){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{avatar=r.result;renderProfile();$('menu').classList.add('hide')};r.readAsDataURL(f)}
-
-/* sidebar */
-function renderHist(){
-  const gs=[...new Set(chats.map(c=>c.g))];
-  $('hist').innerHTML=gs.map(g=>`<div class="grp" onclick="collapsed['${g}']=!collapsed['${g}'];renderHist()">${g}<span style="transform:rotate(${collapsed[g]?-90:0}deg);transition:.2s">${ic('chev')}</span></div>`+(collapsed[g]?'':chats.filter(c=>c.g===g).map(c=>`<div class="item ${c===cur?'on':''}" onclick="openChat(${c.id})">${esc(c.t)}</div>`).join(''))).join('');
-}
-function newChat(){cur=null;renderHist();renderMsgs()}
-async function openChat(id){
-  cur=chats.find(c=>c.id===id);
-  if(cur.m===null){
-    const rows=await api('/api/conversations/'+id);
-    cur.m=rows.map(r=>({r:r.role==='assistant'?'ai':'user',c:r.content}));
-  }
-  renderHist();renderMsgs();
-  if(innerWidth<720)$('side').classList.add('off');
-}
-/* markdown */
+<body class="bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useContext,createContext,useRef,useEffect}=React;
+const IC={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',back:'<path d="M19 12H5M12 19l-7-7 7-7"/>',cpu:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',pulse:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',up:'<path d="M12 19V5M5 12l7-7 7 7"/>',copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',pin:'<path d="M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',trash:'<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/>',check:'<path d="M20 6 9 17l-5-5"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',plus:'<path d="M12 5v14M5 12h14"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',power:'<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0"/>',cam:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',chev:'<path d="M6 9l6 6 6-6"/>',eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',eyeoff:'<path d="M9.9 4.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M2 2l20 20M9.9 9.9a3 3 0 0 0 4.2 4.2"/>'};
+const Icon=({n,c='h-[18px] w-[18px]'})=><svg className={c+' shrink-0'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:IC[n]}}/>;
+const inp="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-900";
+const btnP="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-85 disabled:opacity-50 dark:bg-white dark:text-zinc-900";
+const btnS="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
+const today=()=>new Date().toISOString().slice(0,10);
+let DEMO=false;
+async function api(url,method='GET',body){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.status===401)throw new Error('auth');return r.json()}
+const fromApi=u=>({id:u.user_id,name:u.username,email:u.email||u.username,role:u.role==='admin'?'Admin':'User'});
+const pinIds=()=>{try{return JSON.parse(localStorage.getItem('es_pins')||'[]')}catch(e){return[]}};
+const savePins=l=>{try{localStorage.setItem('es_pins',JSON.stringify(l.filter(c=>c.p&&!c.tmp).map(c=>c.id)))}catch(e){}};
+const groupOf=ts=>{const d=(Date.now()-new Date(String(ts).replace(' ','T')+'Z'))/864e5;return d<1?'Today':d<7?'Previous 7 days':d<30?'Previous 30 days':'Older'};
+async function realLogin(email,pw,role,setErr,setUser,setView){try{const u=await api('/api/login','POST',{email,username:email,password:pw});if(u.error)return setErr({pw:u.error});if(role==='Admin'&&u.role!=='admin')return setErr({pw:'This account does not have admin access.'});setUser(fromApi(u));setView('app')}catch(e){setErr({pw:'Could not reach the server.'})}}
+async function realSignup(f,setErr,setUser,setView,say){try{const r=await api('/api/register','POST',{username:f.name.trim(),email:f.email.trim().toLowerCase(),password:f.pw,company:f.company.trim(),position:f.pos});if(!r.ok)return setErr({email:r.message||r.error||'Could not create account.'});const u=await api('/api/login','POST',{email:f.email.trim(),username:f.email.trim(),password:f.pw});if(u.error)return setErr({email:u.error});setUser(fromApi(u));setView('app');say('Welcome to Edge Sight!')}catch(e){setErr({email:'Could not reach the server.'})}}
+const seed=[
+ {id:1,name:'Priya Raman',email:'priya@connectedfleet.io',role:'Admin',pos:'Fleet Manager',active:true,joined:'2026-01-14',pw:'demo1234'},
+ {id:2,name:'Arjun Mehta',email:'arjun@connectedfleet.io',role:'User',pos:'Operations Engineer',active:true,joined:'2026-02-03',pw:'demo1234'},
+ {id:3,name:'Sara Khan',email:'sara@connectedfleet.io',role:'User',pos:'Fleet Manager',active:true,joined:'2026-03-21',pw:'demo1234'},
+ {id:4,name:'Liam O’Neil',email:'liam@connectedfleet.io',role:'User',pos:'Operations Engineer',active:false,joined:'2026-04-09',pw:'demo1234'},
+ {id:5,name:'Mei Chen',email:'mei@connectedfleet.io',role:'Admin',pos:'Operations Engineer',active:true,joined:'2026-05-30',pw:'demo1234'}];
+const seedChats=[
+ {id:11,t:'Firmware status overview',g:'Today',p:false,m:[{r:'user',c:'Which gateways have a firmware mismatch?'},{r:'ai',c:'Across the **42 gateways** in the sample fleet, 3 report a firmware mismatch.\n\n- `GW-017` is on v2.3.1 (expected v2.4.0)\n- `GW-029` failed its last OTA update\n- `GW-034` has not checked in for 6 hours'}]},
+ {id:12,t:'Battery drain on sensors',g:'Today',p:false,m:[]},
+ {id:13,t:'Diagnostic code E-204',g:'Previous 7 days',p:false,m:[]},
+ {id:14,t:'Weekly uptime report',g:'Previous 7 days',p:false,m:[]}];
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-function hl(code){return esc(code).replace(/(#.*$)|("[^"\n]*"|'[^'\n]*')|\b(def|return|import|from|if|else|for|in|None|True|False|print)\b|\b(\d+\.?\d*)\b/gm,(m,c,s,k,n)=>c?`<span class="c">${c}</span>`:s?`<span class="s">${s}</span>`:k?`<span class="k">${k}</span>`:`<span class="n">${n}</span>`)}
-function md(t){
-  const blocks=[];t=t.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>{blocks.push(`<div class="cb"><div class="h"><span>${l||'code'}</span><button onclick="cp(this)">${ic('copy')}Copy</button></div><pre><code>${hl(c.trimEnd())}</code></pre></div>`);return`\u0000${blocks.length-1}\u0000`});
-  let h=esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^## (.*)$/gm,'<h3>$1</h3>').replace(/((?:^[-*] .*(?:\n|$))+)/gm,m=>'<ul>'+m.trim().split('\n').map(l=>'<li>'+l.slice(2)+'</li>').join('')+'</ul>').replace(/((?:^\d+\. .*(?:\n|$))+)/gm,m=>'<ol>'+m.trim().split('\n').map(l=>'<li>'+l.replace(/^\d+\. /,'')+'</li>').join('')+'</ol>');
-  h=h.split(/\n{2,}/).map(p=>/^<(ul|ol|h\d)|^\u0000/.test(p.trim())?p:`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
-  return h.replace(/\u0000(\d+)\u0000/g,(_,i)=>blocks[i]);
-}
-function cp(b){navigator.clipboard&&navigator.clipboard.writeText(b.closest('.cb').querySelector('code').textContent).catch(()=>{})}
+function md(t){const b=[];t=t.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>{b.push('<pre class="my-2 overflow-x-auto rounded-xl bg-slate-950 p-3 text-[13px] text-slate-200"><code>'+esc(c.trimEnd())+'</code></pre>');return '\u0000'+(b.length-1)+'\u0000'});
+ let h=esc(t).replace(/`([^`]+)`/g,'<code class="rounded bg-zinc-200 px-1.5 py-0.5 text-[13px] dark:bg-zinc-700">$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/^- (.*)$/gm,'<li class="ml-5 list-disc">$1</li>');
+ h=h.split(/\n{2,}/).map(p=>/^<li/.test(p.trim())||p.includes('\u0000')?p:'<p class="mb-2">'+p.replace(/\n/g,'<br>')+'</p>').join('');
+ return h.replace(/\u0000(\d+)\u0000/g,(_,i)=>b[i])}
+const reply=q=>{q=q.toLowerCase();
+ if(/firmware|ota/.test(q))return 'Across the **42 gateways** in the sample fleet, 3 report a firmware mismatch.\n\n- `GW-017` is on v2.3.1 (expected v2.4.0)\n- `GW-029` failed its last OTA update\n- `GW-034` has not checked in for 6 hours\n\nThis is mock data for the prototype.';
+ if(/query|sql|code/.test(q))return 'Here is a sample telemetry query:\n\n```sql\nSELECT device_id, AVG(temp_c) AS avg_temp\nFROM telemetry\nWHERE ts > NOW() - INTERVAL \'24 hours\'\nGROUP BY device_id\nHAVING AVG(temp_c) > 70;\n```\n\nIt lists devices running hot over the last day.';
+ return 'I can look into **telemetry**, **diagnostic codes**, **firmware status** and **operational metrics**.\n\n- Try “Which devices are offline?”\n- Or “Show firmware mismatches”\n\nThis prototype returns sample answers only.'};
 
-/* messages */
-const sugg=['How many unique assets are there?','Show the average health score','Which maintenance is due?','Give me a Python filter for failures'];
-function renderMsgs(){
-  const el=$('msgs');
-  if(!cur||!cur.m.length){el.innerHTML=`<div class="empty"><div class="av" style="width:48px;height:48px;font-size:20px">E</div><h2>What can I help you analyze?</h2><div class="chips">${sugg.map(s=>`<button class="chip" onclick="ask(this.textContent)">${s}</button>`).join('')}</div></div>`;return}
-  el.innerHTML='<div class="col">'+cur.m.map(msgHTML).join('')+'</div>';el.scrollTop=el.scrollHeight;
-}
-function msgHTML(m,i){
-  if(m.r==='user')return`<div class="m user"><div class="b">${esc(m.c)}</div></div>`;
-  return`<div class="m ai"><div class="av">E</div><div class="b">${md(m.c)}<div class="acts"><button class="ib" title="Copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(cur.m[${i}].c).catch(()=>{})">${ic('copy')}</button><button class="ib" title="Regenerate" onclick="regen()">${ic('redo')}</button><button class="ib" onclick="this.classList.toggle('on')">${ic('up2')}</button><button class="ib" onclick="this.classList.toggle('on')">${ic('dn2')}</button></div></div></div>`;
-}
-function reply(q){
-  q=q.toLowerCase();
-  if(/code|python|filter|script/.test(q))return"Here is a small Pandas helper that mirrors the logic in `analytics.py`:\n\n```python\ndef find_recorded_failures(df):\n    # Normalize text, then match yes/true/1\n    values = df[\"unscheduled_failure_within_7d\"].astype(str).str.strip().str.casefold()\n    return df[values.isin([\"yes\", \"true\", \"1\"])]\n```\n\nIt treats the column as **recorded data**, so it reports past records rather than predicting future failures.";
-  if(/health/.test(q))return"## Average health score\n\nThe **dataset analytics** report the average `ai_health_index_score` after ignoring non-numeric values.\n\n- Lowest and highest scores are included in the dataset summary\n- Scores are *recorded* values, not live readings\n\nConnect the backend (`generate_rag_answer`) to see the real figures here.";
-  if(/maint|pm/.test(q))return"Records flagged in `scheduled_pm_due_within_7d` are counted as **maintenance due within 7 days**.\n\n1. Filter records where the flag is yes/true/1\n2. Group by `asset_type`\n3. Review assets with high vibration first\n\nWould you like me to draft that filter?";
-  if(/asset|record|how many/.test(q))return"The dataset summary lists **total records** and **unique asset IDs** separately, since one asset can appear in many observations.\n\nThis is demo output; wire the UI to your Python backend for exact counts.";
-  return"I can answer from two sources:\n\n- **Dataset analytics**: counts, health, temperature, vibration, failures\n- **Manuals**: indexed documents, cited by filename and page\n\nTry asking about assets, health scores or maintenance.";
-}
-function ask(t){$('inp').value=t;grow();send()}
-let busy=false;
-function send(){
-  const t=$('inp').value.trim();if(!t||busy)return;
-  if(!cur){cur={id:null,t:t.slice(0,40),g:'Today',m:[]};chats.unshift(cur);renderHist()}
-  cur=({r:'user',c:t});$('inp').value='';grow();$('att').classList.add('hide');renderHist();respond(t);
-}
-function regen(){const l=[...cur.m].reverse().find(m=>m.r==='user');if(!l||busy)return;if(cur.m[cur.m.length-1].r==='ai')cur.m.pop();respond(l.c,false)}
-async function respond(q,saveUser=true){
-  busy=true;renderMsgs();
-  document.querySelector('.col').insertAdjacentHTML('beforeend','<div class="m ai"><div class="av">E</div><div class="b dots"><span></span><span></span><span></span></div></div>');
-  $('msgs').scrollTop=1e9;
-  let answer;
-  try{
-    const r=await api('/api/chat','POST',{question:q,conversation_id:cur.id,save_user:saveUser});
-    answer=r.answer;cur.id=r.conversation_id;
-  }catch(e){answer='Could not reach the server. Check that uvicorn and Ollama are running.'}
-  cur.m.push({r:'ai',c:answer});busy=false;renderHist();renderMsgs();
-}
-const inp=$('inp');
-function grow(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,200)+'px';$('send').disabled=!inp.value.trim()}
-inp.addEventListener('input',grow);
-inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
-function attach(i){const f=i.files[0];if(!f)return;const a=$('att');a.textContent='📎 '+f.name;a.classList.remove('hide')}
+const Ctx=createContext();
+function Provider({children}){
+ const [view,setView]=useState('about'),[user,setUser]=useState(null),[users,setUsers]=useState(seed),[toast,setToast]=useState('');
+ const [dark,setDark]=useState(document.documentElement.classList.contains('dark'));
+ const say=t=>{setToast(t);setTimeout(()=>setToast(''),2400)};
+ useEffect(()=>{document.documentElement.classList.toggle('dark',dark)},[dark]);
+ useEffect(()=>{fetch('/api/me').then(r=>r.json()).then(u=>{if(u.user_id){setUser(fromApi(u));setView('app')}}).catch(()=>{DEMO=true;say('Demo mode: backend not connected.')})},[]);
+ return <Ctx.Provider value={{view,setView,user,setUser,users,setUsers,dark,setDark,say}}>{children}
+  {toast&&<div className="fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-full bg-zinc-800 px-4 py-2 text-sm text-white shadow-lg">{toast}</div>}</Ctx.Provider>}
+const Logo=()=><div className="flex items-center gap-2.5 font-bold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-500 text-white"><Icon n="cpu"/></span>Edge Sight Query Nexus</div>;
+const ThemeBtn=()=>{const {dark,setDark}=useContext(Ctx);return <button title="Toggle theme" onClick={()=>setDark(!dark)} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 transition hover:bg-zinc-100 hover:text-current dark:hover:bg-zinc-800"><Icon n={dark?'sun':'moon'}/></button>};
+const Modal=({children,onClose})=><div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4" onClick={onClose}><div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900" onClick={e=>e.stopPropagation()}>{children}</div></div>;
+const Field=({label,err,...p})=><label className="mb-3 block text-sm"><span className="mb-1 block font-medium">{label}</span><input className={inp+(err?' !border-red-500':'')} {...p}/>{err&&<span className="mt-1 block text-xs text-red-500">{err}</span>}</label>;
+const PwField=({label='Password',err,...p})=>{const [s,setS]=useState(false);return <label className="mb-3 block text-sm"><span className="mb-1 block font-medium">{label}</span><div className="relative"><input className={inp+' pr-11'+(err?' !border-red-500':'')} type={s?'text':'password'} {...p}/><button type="button" title={s?'Hide password':'Show password'} onClick={()=>setS(!s)} className="absolute inset-y-0 right-2 grid w-8 place-items-center text-zinc-500 hover:text-current"><Icon n={s?'eyeoff':'eye'}/></button></div>{err&&<span className="mt-1 block text-xs text-red-500">{err}</span>}</label>};
+const Seg=({opts,val,set})=><div className="mb-4 flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">{opts.map(o=><button key={o} type="button" onClick={()=>set(o)} className={'flex-1 rounded-lg py-2 text-sm font-semibold transition '+(val===o?'bg-white shadow dark:bg-zinc-700':'text-zinc-500')}>{o}</button>)}</div>;
+const AuthShell=({children,back='landing'})=>{const {setView}=useContext(Ctx);return <div className="flex min-h-full flex-col"><header className="flex items-center justify-between px-6 py-4"><button onClick={()=>setView(back)} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-current"><Icon n="back"/>Back</button><ThemeBtn/></header><div className="grid flex-1 place-items-center p-4"><div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-7 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">{children}</div></div></div>};
 
-/* settings */
-let tab='General';
-function openSettings(){$('menu').classList.add('hide');$('settings').classList.remove('hide');renderSettings()}
-function tg(on){return`<div class="tg ${on?'on':''}" onclick="this.classList.toggle('on')"></div>`}
-function renderSettings(){
-  const tabs=[['General','gear'],['Data Controls','db']];if(user.role==='Admin')tabs.push(['System','srv']);
-  $('snav').innerHTML=tabs.map(([n,i])=>`<button class="${n===tab?'on':''}" onclick="tab='${n}';renderSettings()">${ic(i)}${n}</button>`).join('');
-  const dark=document.documentElement.dataset.theme?document.documentElement.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
-  const rows={
-    General:`<h3>General</h3><div class="row"><div>Dark mode<small>Switch between light and dark themes</small></div><div class="tg ${dark?'on':''}" onclick="toggleTheme();this.classList.toggle('on')"></div></div><p style="margin:16px 0 6px">Custom instructions</p><textarea class="fld" placeholder="e.g. Always cite document filenames and page numbers."></textarea>`,
-    'Data Controls':`<h3>Data controls</h3><div class="row"><div>Save chat history<small>Store conversations in SQLite</small></div>${tg(1)}</div><div class="row"><div>Export chats<small>Download all conversations</small></div><button class="btn sec">Export</button></div><div class="row"><div>Delete all chats<small>This cannot be undone</small></div><button class="btn sec" style="color:#ef4444" onclick="deleteAll()">Delete</button></div>`,
-    System:`<h3>System settings</h3><div class="row"><div>Chat model<small>Ollama</small></div><b>llama3.2</b></div><div class="row"><div>Embedding model<small>Ollama</small></div><b>nomic-embed-text</b></div><div class="row"><div>Re-index documents<small>Rebuild the ChromaDB knowledge base</small></div><button class="btn sec" onclick="adminCall('/api/admin/reindex',this,'Indexed ✓')">Re-index</button></div><div class="row"><div>Refresh dataset<small>Reload SQLite from the latest CSV</small></div><button class="btn sec" onclick="adminCall('/api/admin/refresh',this,'Refreshed ✓')">Refresh</button></div><div class="row"><div>Allow new registrations</div>${tg(1)}</div>`
-  };
-  $('pane').innerHTML=rows[tab];
-}
-paint();
-async function deleteAll(){
-  for(const c of chats)await api('/api/conversations/'+c.id,'DELETE');
-  chats=[];newChat();$('settings').classList.add('hide');
-}
-async function adminCall(url,btn,done){
-  btn.textContent='Working…';btn.disabled=true;
-  await api(url,'POST');btn.textContent=done;btn.disabled=false;
-}
+/* STEP 1: About */
+function About(){const {setView}=useContext(Ctx);
+ return <div className="flex min-h-full flex-col">
+  <header className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800"><Logo/><div className="flex items-center gap-2"><ThemeBtn/><button className={btnP} onClick={()=>setView('landing')}>See Inside<Icon n="arrow"/></button></div></header>
+  <section className="mx-auto max-w-3xl px-6 py-20 text-center"><h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">A real-time conversational intelligence platform for IoT fleet operations</h1>
+   <p className="mt-5 text-lg text-zinc-500">Ask questions about connected devices in plain language and get grounded answers from telemetry, diagnostics and manuals.</p></section>
+  <section className="mx-auto mb-16 grid max-w-4xl gap-4 px-6 md:grid-cols-3">{[['pulse','Live telemetry','Query sensor streams, health codes and firmware status.'],['chat','Conversational analytics','No dashboards to build. Just ask.'],['shield','Role-based control','Admins manage people, access and credits.']].map(([i,t,d])=><div key={t} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-800/50"><span className="text-emerald-500"><Icon n={i} c="mb-2 h-6 w-6"/></span><h3 className="font-semibold">{t}</h3><p className="text-sm text-zinc-500">{d}</p></div>)}</section></div>}
+
+/* STEP 2: Hero landing */
+function Landing(){const {setView}=useContext(Ctx);
+ return <div className="flex min-h-full flex-col bg-gradient-to-b from-emerald-50 to-white dark:from-zinc-900 dark:to-zinc-900">
+  <header className="flex items-center justify-between px-6 py-4 md:px-10"><div><div className="text-sm font-extrabold tracking-[.2em]">EDGE SIGHT QUERY NEXUS</div><div className="text-xs italic text-zinc-500">A Product of Connected Fleet Analytics &amp; Gen AI Labs</div></div>
+   <div className="flex items-center gap-2"><ThemeBtn/><button onClick={()=>setView('signin')} className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-semibold transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800">Sign in</button></div></header>
+  <main className="mx-auto flex max-w-4xl flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+   <h1 className="text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">Solve Complex IoT Fleet &amp; Telemetry Problems in Real-Time Using Gen AI</h1>
+   <p className="mt-5 max-w-2xl text-lg text-zinc-500">Query live telemetry streams, diagnostic health codes, firmware status, and operational metrics using simple natural language.</p>
+   <div className="mt-10 w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-lg dark:border-zinc-700 dark:bg-zinc-800"><div className="mb-1 text-xs text-zinc-500">You</div><div className="text-sm">Which gateways reported firmware mismatches in the last 24 hours?</div>
+    <div className="mt-3 flex flex-wrap gap-2 text-xs">{['Telemetry','Diagnostics','Firmware'].map(t=><span key={t} className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-600 dark:text-emerald-400">{t}</span>)}</div></div></main>
+  <footer className="border-t border-zinc-200 bg-zinc-900 px-6 py-5 text-white dark:border-zinc-800"><div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 md:flex-row"><div><div className="font-semibold">New here? Register your IoT Fleet Organization.</div><div className="text-sm text-zinc-400">Set up your fleet workspace in minutes.</div></div>
+   <button onClick={()=>setView('signup')} className="rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-400">Create free account →</button></div></footer></div>}
+
+/* STEP 3: Auth */
+function SignIn(){const {users,setUser,setView}=useContext(Ctx);
+ const [role,setRole]=useState('User'),[email,setEmail]=useState(''),[pw,setPw]=useState(''),[show,setShow]=useState(false),[err,setErr]=useState({}),[mode,setMode]=useState('in'),[fe,setFe]=useState(''),[fer,setFer]=useState('');
+ const demo=r=>{setRole(r);setEmail(r==='Admin'?'priya@connectedfleet.io':'arjun@connectedfleet.io');setPw('demo1234');setErr({})};
+ const submit=()=>{const e={};
+  if(!/^\S+@\S+\.\S+$/.test(email.trim()))e.email='Enter a valid email address.';
+  if(!pw)e.pw='Enter your password.';
+  if(Object.keys(e).length)return setErr(e);
+  if(!DEMO)return realLogin(email.trim(),pw,role,setErr,setUser,setView);const u=users.find(x=>x.email.toLowerCase()===email.trim().toLowerCase()&&x.pw===pw);
+  if(!u)return setErr({pw:'Invalid email or password.'});
+  if(!u.active)return setErr({pw:'This account is deactivated. Contact your admin.'});
+  if(role==='Admin'&&u.role!=='Admin')return setErr({pw:'This account does not have admin access.'});
+  setUser(u);setView('app')};
+ const reset=()=>{if(!/^\S+@\S+\.\S+$/.test(fe.trim()))return setFer('Enter a valid email address.');setFer('');if(!DEMO)api('/api/forgot-password','POST',{email:fe.trim()}).catch(()=>{});setMode('sent')};
+ if(mode!=='in')return <AuthShell><h2 className="text-xl font-bold">{mode==='sent'?'Check your inbox':'Reset your password'}</h2>
+  {mode==='sent'?<div className="py-4 text-center"><span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-500"><Icon n="check" c="h-6 w-6"/></span><p className="text-sm text-zinc-500">Password reset link sent to your email.</p></div>
+  :<><p className="mb-4 text-sm text-zinc-500">Enter your account email and we’ll send you a reset link.</p><Field label="Email" type="email" value={fe} onChange={e=>setFe(e.target.value)} err={fer}/><button className={btnP+' w-full'} onClick={reset}>Send reset link</button></>}
+  <button className="mt-4 w-full text-center text-sm text-zinc-500 underline" onClick={()=>setMode('in')}>← Back to sign in</button></AuthShell>;
+ return <AuthShell><h2 className="text-2xl font-bold">Welcome back</h2><p className="mb-5 text-sm text-zinc-500">Choose a role and sign in.</p>
+  <Seg opts={['User','Admin']} val={role} set={setRole}/>
+  <Field label="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} err={err.email}/>
+  <label className="mb-3 block text-sm"><span className="mb-1 block font-medium">Password</span><div className="relative"><input className={inp+' pr-11'+(err.pw?' !border-red-500':'')} type={show?'text':'password'} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()}/><button type="button" title={show?'Hide password':'Show password'} onClick={()=>setShow(!show)} className="absolute inset-y-0 right-2 grid w-8 place-items-center text-zinc-500 hover:text-current"><Icon n={show?'eyeoff':'eye'}/></button></div>{err.pw&&<span className="mt-1 block text-xs text-red-500">{err.pw}</span>}</label>
+  <div className="mb-4 text-right"><button className="text-sm text-zinc-500 underline" onClick={()=>{setFe(email);setMode('forgot')}}>Forgot password?</button></div>
+  <button className={btnP+' w-full'} onClick={submit}>Sign In</button>
+  {DEMO&&<div className="mt-3 flex gap-2"><button className={btnS+' flex-1 !py-1.5 !text-xs'} onClick={()=>demo('Admin')}>Demo Admin</button><button className={btnS+' flex-1 !py-1.5 !text-xs'} onClick={()=>demo('User')}>Demo User</button></div>}
+  <p className="mt-5 text-center text-sm text-zinc-500">No account? <button className="font-semibold text-emerald-600 underline" onClick={()=>setView('signup')}>Create one</button></p></AuthShell>}
+function SignUp(){const {users,setUsers,setUser,setView,say}=useContext(Ctx);
+ const [f,setF]=useState({name:'',email:'',pw:'',company:'',role:'User',pos:'Fleet Manager'}),[err,setErr]=useState({});
+ const set=k=>e=>setF({...f,[k]:e.target?e.target.value:e});
+ const submit=()=>{const e={};
+  if(!f.name.trim())e.name='Enter your full name.';
+  if(!/^\S+@\S+\.\S+$/.test(f.email.trim()))e.email='Enter a valid work email.';
+  else if(users.some(u=>u.email.toLowerCase()===f.email.trim().toLowerCase()))e.email='An account with this email already exists.';
+  if(f.pw.length<8)e.pw='Use at least 8 characters.';
+  if(!f.company.trim())e.company='Enter your fleet or company name.';
+  if(Object.keys(e).length)return setErr(e);
+  const u={id:Date.now(),name:f.name.trim(),email:f.email.trim(),role:f.role,pos:f.pos,company:f.company.trim(),active:true,joined:today(),pw:f.pw};
+  if(!DEMO)return realSignup(f,setErr,setUser,setView,say);setUsers([...users,u]);setUser(u);setView('app');say('Welcome to Edge Sight!')};
+ return <AuthShell><h2 className="text-2xl font-bold">Create your account</h2><p className="mb-5 text-sm text-zinc-500">Register your IoT fleet organization.</p>
+  <Field label="Full name" value={f.name} onChange={set('name')} err={err.name}/><Field label="Work email" type="email" value={f.email} onChange={set('email')} err={err.email}/>
+  <PwField value={f.pw} onChange={set('pw')} err={err.pw}/><Field label="Fleet / Company name" value={f.company} onChange={set('company')} err={err.company}/>
+  {DEMO&&<><span className="mb-1 block text-sm font-medium">Role</span><Seg opts={['User','Admin']} val={f.role} set={set('role')}/></>}
+  <label className="mb-5 block text-sm"><span className="mb-1 block font-medium">Job function</span><select className={inp} value={f.pos} onChange={set('pos')}><option>Fleet Manager</option><option>Operations Engineer</option></select></label>
+  <button className={btnP+' w-full'} onClick={submit}>Create free account</button>
+  <p className="mt-5 text-center text-sm text-zinc-500">Already registered? <button className="font-semibold text-emerald-600 underline" onClick={()=>useContext&&setView('signin')}>Sign in</button></p></AuthShell>}
+
+/* Chat */
+function Chat({chat,send,busy}){
+ const [t,setT]=useState(''),ref=useRef(),end=useRef();
+ useEffect(()=>{end.current&&end.current.scrollIntoView({behavior:'smooth'})},[chat&&chat.m&&chat.m.length,busy]);
+ const go=()=>{send(t);setT('');if(ref.current)ref.current.style.height='auto'};
+ const msgs=(chat&&chat.m)||[];
+ return <>
+  <div className="flex-1 overflow-y-auto">{msgs.length===0?<div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center"><span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500 text-white"><Icon n="cpu" c="h-6 w-6"/></span><h2 className="text-2xl font-semibold">What can I help you analyze?</h2>
+   <div className="flex flex-wrap justify-center gap-2">{['Which devices are offline?','Show firmware mismatches','Write a telemetry query'].map(s=><button key={s} onClick={()=>send(s)} className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-current dark:border-zinc-700 dark:hover:bg-zinc-800">{s}</button>)}</div></div>
+  :<div className="mx-auto max-w-3xl px-5 py-4">{msgs.map((m,i)=>m.r==='user'
+   ?<div key={i} className="my-5 flex justify-end"><div className="max-w-[80%] whitespace-pre-wrap rounded-3xl bg-zinc-100 px-5 py-2.5 dark:bg-zinc-800">{m.c}</div></div>
+   :<div key={i} className="my-5 flex gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">E</span><div className="min-w-0 flex-1"><div dangerouslySetInnerHTML={{__html:md(m.c)}}/><button title="Copy" onClick={()=>navigator.clipboard&&navigator.clipboard.writeText(m.c).catch(()=>{})} className="mt-1 text-zinc-400 hover:text-current"><Icon n="copy" c="h-4 w-4"/></button></div></div>)}
+   {busy&&<div className="my-5 flex gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">E</span><div className="flex items-center gap-1.5">{[0,1,2].map(i=><span key={i} className="h-2 w-2 animate-pulse rounded-full bg-zinc-400" style={{animationDelay:i*.15+'s'}}/>)}</div></div>}<div ref={end}/></div>}</div>
+  <div className="px-5 pb-2"><div className="mx-auto flex max-w-3xl items-end gap-2 rounded-3xl bg-zinc-100 p-2 dark:bg-zinc-800">
+   <textarea ref={ref} rows={1} value={t} placeholder="Ask about telemetry, firmware, diagnostics…" className="max-h-48 flex-1 resize-none bg-transparent px-3 py-2 outline-none" onChange={e=>{setT(e.target.value);e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,192)+'px'}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}}/>
+   <button disabled={!t.trim()||busy} onClick={go} className="grid h-9 w-9 place-items-center rounded-full bg-zinc-900 text-white transition disabled:opacity-25 dark:bg-white dark:text-zinc-900"><Icon n="up"/></button></div>
+   <p className="py-2 text-center text-xs text-zinc-500">Edge Sight can make mistakes. Verify critical fleet decisions.</p></div></>}
+
+/* Admin dashboard */
+function Admin(){const {user,users,setUsers,say}=useContext(Ctx);
+ const load=()=>api('/api/admin/users').then(l=>setUsers(l.map(u=>({id:u.user_id,name:u.username,email:u.email,role:u.role==='admin'?'Admin':'User',pos:u.position||'Operations Engineer',active:!!u.is_active,joined:(u.created_at||'').slice(0,10)})))).catch(()=>say('Could not load users.'));
+ useEffect(()=>{if(!DEMO)load()},[]);
+ const [del,setDel]=useState(null),[inv,setInv]=useState(false),[f,setF]=useState({name:'',email:'',role:'User',pos:'Fleet Manager'}),[ferr,setFerr]=useState('');
+ const stats=[['Active users',users.filter(u=>u.active).length],['Admins',users.filter(u=>u.role==='Admin').length],['Fleet Managers',users.filter(u=>u.pos==='Fleet Manager').length],['Operations Engineers',users.filter(u=>u.pos==='Operations Engineer').length]];
+ const setRole=(u,r)=>{if(u.id===user.id)return say('You can’t change your own role.');
+  if(u.role==='Admin'&&r==='User'&&users.filter(x=>x.role==='Admin').length<2)return say('At least one admin is required.');
+  if(!DEMO)api('/api/admin/users/'+u.id,'PATCH',{role:r.toLowerCase()}).catch(()=>say('Server update failed.'));setUsers(us=>us.map(x=>x.id===u.id?{...x,role:r}:x));say(u.name+(r==='Admin'?' promoted to Admin.':' changed to User.'))};
+ const toggle=u=>{if(u.id===user.id)return say('You can’t deactivate your own account.');if(!DEMO)api('/api/admin/users/'+u.id,'PATCH',{active:!u.active}).catch(()=>say('Server update failed.'));setUsers(us=>us.map(x=>x.id===u.id?{...x,active:!x.active}:x));say(u.name+(u.active?' deactivated.':' reactivated.'))};
+ const remove=()=>{if(!DEMO)api('/api/admin/users/'+del.id,'DELETE').catch(()=>say('Server update failed.'));setUsers(us=>us.filter(x=>x.id!==del.id));say(del.name+' deleted.');setDel(null)};
+ const invite=()=>{if(!f.name.trim()||!/^\S+@\S+\.\S+$/.test(f.email.trim()))return setFerr('Enter a name and a valid email.');
+  if(users.some(u=>u.email.toLowerCase()===f.email.trim().toLowerCase()))return setFerr('That email already exists.');
+  if(!DEMO){api('/api/admin/users','POST',{name:f.name.trim(),email:f.email.trim(),role:f.role.toLowerCase(),position:f.pos}).then(r=>{if(r.error)return setFerr(r.error);load();say('Invite created for '+f.email.trim()+'. Temporary password: '+r.temp_password);setInv(false);setFerr('')}).catch(()=>setFerr('Server error.'));return}setUsers([...users,{id:Date.now(),name:f.name.trim(),email:f.email.trim(),role:f.role,pos:f.pos,active:true,joined:today(),pw:'welcome123'}]);
+  say('Invitation sent to '+f.email.trim());setInv(false);setF({name:'',email:'',role:'User',pos:'Fleet Manager'});setFerr('')};
+ return <div className="flex-1 overflow-y-auto px-5 pb-8"><div className="mx-auto max-w-5xl">
+  <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">{stats.map(([l,v])=><div key={l} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50"><div className="text-3xl font-bold">{v}</div><div className="text-sm text-zinc-500">{l}</div></div>)}</div>
+  <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">All users ({users.length})</h2><button className={btnP+' !py-2'} onClick={()=>setInv(true)}><Icon n="plus"/>Invite user</button></div>
+  <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800"><table className="w-full min-w-[720px] text-left text-sm">
+   <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-800/60"><tr>{['Name','Email','Role','Status','Joined','Actions'].map(h=><th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr></thead>
+   <tbody>{users.map(u=><tr key={u.id} className="border-t border-zinc-200 dark:border-zinc-800">
+    <td className="px-4 py-3 font-medium">{u.name}{u.id===user.id&&<span className="ml-2 text-xs text-zinc-500">(you)</span>}<div className="text-xs font-normal text-zinc-500">{u.pos}</div></td><td className="px-4 py-3 text-zinc-500">{u.email}</td>
+    <td className="px-4 py-3"><select value={u.role} onChange={e=>setRole(u,e.target.value)} className="rounded-lg border border-zinc-300 bg-transparent px-2 py-1 dark:border-zinc-700"><option className="text-black">User</option><option className="text-black">Admin</option></select></td>
+    <td className="px-4 py-3"><span className={'rounded-full px-2.5 py-0.5 text-xs font-semibold '+(u.active?'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400':'bg-zinc-500/15 text-zinc-500')}>{u.active?'Active':'Inactive'}</span></td>
+    <td className="px-4 py-3 text-zinc-500">{u.joined}</td>
+    <td className="px-4 py-3"><div className="flex gap-1"><button title={u.active?'Deactivate':'Activate'} onClick={()=>toggle(u)} className="grid h-8 w-8 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><Icon n="power"/></button><button title="Delete" onClick={()=>u.id===user.id?say('You can’t delete your own account.'):setDel(u)} className="grid h-8 w-8 place-items-center rounded-lg text-red-500 hover:bg-red-500/10"><Icon n="trash"/></button></div></td></tr>)}</tbody></table></div></div>
+  {del&&<Modal onClose={()=>setDel(null)}><h2 className="text-xl font-bold">Delete account?</h2><p className="my-3 text-sm text-zinc-500">{del.name} ({del.email}) will be permanently removed. To keep the account, deactivate it instead.</p><div className="flex justify-end gap-2"><button className={btnS} onClick={()=>setDel(null)}>Cancel</button><button className="rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-600" onClick={remove}>Delete permanently</button></div></Modal>}
+  {inv&&<Modal onClose={()=>setInv(false)}><h2 className="mb-4 text-xl font-bold">Invite user</h2><Field label="Full name" value={f.name} onChange={e=>setF({...f,name:e.target.value})}/><Field label="Work email" type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} err={ferr}/>
+   <span className="mb-1 block text-sm font-medium">Role</span><Seg opts={['User','Admin']} val={f.role} set={r=>setF({...f,role:r})}/>
+   <select className={inp+' mb-5'} value={f.pos} onChange={e=>setF({...f,pos:e.target.value})}><option>Fleet Manager</option><option>Operations Engineer</option></select>
+   <div className="flex justify-end gap-2"><button className={btnS} onClick={()=>setInv(false)}>Cancel</button><button className={btnP} onClick={invite}>Send invite</button></div></Modal>}</div>}
+
+/* App shell */
+function AppShell(){
+ const {user,setUser,setView,say}=useContext(Ctx);
+ const [panel,setPanel]=useState('chat'),[chats,setChats]=useState(()=>DEMO?seedChats:[]),[cur,setCur]=useState(null),[side,setSide]=useState(true),[pop,setPop]=useState(null),[ren,setRen]=useState(null),[dlg,setDlg]=useState(null),[busy,setBusy]=useState(false),[col,setCol]=useState({}),[models,setModels]=useState(['llama3.2','mistral','GPT-4o','Claude 3.5 Sonnet']),[model,setModel]=useState('');
+ useEffect(()=>{const f=()=>setPop(null);document.addEventListener('click',f);return()=>document.removeEventListener('click',f)},[]);
+ useEffect(()=>{if(DEMO)return;api('/api/conversations').then(l=>{const p=pinIds();setChats(l.map(c=>({id:c.conversation_id,t:c.title,g:groupOf(c.updated_at),p:p.includes(c.conversation_id),m:null})))}).catch(()=>{});api('/api/models').then(l=>{if(l.length)setModels(l)}).catch(()=>{})},[]);
+ const openChat=async c=>{setCur(c.id);setPanel('chat');if(c.m===null){try{const rows=await api('/api/conversations/'+c.id);setChats(cs=>cs.map(x=>x.id===c.id?{...x,m:rows.map(r=>({r:r.role==='assistant'?'ai':'user',c:r.content}))}:x))}catch(e){}}};
+ const chat=chats.find(c=>c.id===cur),pc=pop&&chats.find(c=>c.id===pop.id),dc=dlg&&chats.find(c=>c.id===dlg.id);
+ const send=text=>{if(!text.trim()||busy)return;
+  let id=cur;const cid=cur&&!(chats.find(c=>c.id===cur)||{}).tmp?cur:null;if(!id){id=Date.now();setChats(cs=>[{id,t:text.slice(0,40),g:'Today',p:false,tmp:true,m:[]},...cs]);setCur(id)}
+  const add=m=>setChats(cs=>cs.map(c=>c.id===id?{...c,m:[...(c.m||[]),m]}:c));
+  add({r:'user',c:text});setBusy(true);
+  if(DEMO)setTimeout(()=>{add({r:'ai',c:reply(text)});setBusy(false)},900);
+  else api('/api/chat','POST',{question:text,conversation_id:cid,save_user:true,model:model||models[0]}).then(r=>{setChats(cs=>cs.map(c=>c.id===id?{...c,id:r.conversation_id,tmp:false,m:[...(c.m||[]),{r:'ai',c:r.answer}]}:c));setCur(r.conversation_id)}).catch(()=>add({r:'ai',c:'Could not reach the server. Check that uvicorn and Ollama are running.'})).finally(()=>setBusy(false))};
+ const rename=(id,v)=>{v=v.trim();if(v&&!DEMO&&!(chats.find(c=>c.id===id)||{}).tmp)api('/api/conversations/'+id,'PATCH',{title:v.slice(0,100)}).catch(()=>{});if(v)setChats(cs=>cs.map(c=>c.id===id?{...c,t:v.slice(0,100)}:c));setRen(null)};
+ const pin=id=>{const n=chats.map(c=>c.id===id?{...c,p:!c.p}:c);setChats(n);savePins(n)};
+ const avatar=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>setUser(u=>({...u,avatar:r.result}));r.readAsDataURL(f)};
+ const pinned=chats.filter(c=>c.p),groups=[...(pinned.length?[['Pinned',pinned]]:[]),...[...new Set(chats.filter(c=>!c.p).map(c=>c.g))].map(g=>[g,chats.filter(c=>!c.p&&c.g===g)])];
+ const Item=c=><div key={c.id} onContextMenu={e=>{e.preventDefault();e.stopPropagation();setPop({id:c.id,x:e.clientX,y:e.clientY})}} onClick={()=>openChat(c)} className={'group flex h-9 cursor-pointer items-center rounded-xl pl-2.5 pr-1 text-sm transition '+(c.id===cur&&panel==='chat'?'bg-zinc-200/80 dark:bg-zinc-800':'hover:bg-zinc-200/60 dark:hover:bg-zinc-800/70')}>
+  {c.p&&<Icon n="pin" c="mr-1.5 h-3.5 w-3.5 text-zinc-400"/>}
+  {ren===c.id?<input autoFocus defaultValue={c.t} className="min-w-0 flex-1 rounded border border-emerald-500 bg-transparent px-1.5 outline-none" onClick={e=>e.stopPropagation()} onBlur={e=>rename(c.id,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')e.target.blur();if(e.key==='Escape')setRen(null)}}/>:<span className="flex-1 truncate">{c.t}</span>}
+  <button title="Options" onClick={e=>{e.stopPropagation();const r=e.currentTarget.getBoundingClientRect();setPop({id:c.id,x:r.right+6,y:r.top})}} className={'grid h-7 w-7 place-items-center rounded-lg text-zinc-500 hover:text-current '+(pop&&pop.id===c.id?'':'opacity-0 group-hover:opacity-100')}><Icon n="dots"/></button></div>;
+ return <div className="flex h-full">
+  <aside className={'flex shrink-0 flex-col overflow-hidden bg-zinc-50 transition-all duration-300 dark:bg-zinc-950 '+(side?'w-64 p-2.5':'w-0 p-0')}>
+   <button onClick={()=>{setPanel('chat');setCur(null)}} className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition hover:bg-zinc-200/70 dark:hover:bg-zinc-800"><Icon n="edit"/>New chat</button>
+   <div className="my-2 flex-1 overflow-y-auto">{groups.map(([g,l])=><div key={g}><button onClick={()=>setCol({...col,[g]:!col[g]})} className="flex w-full items-center justify-between px-2.5 pb-1 pt-3 text-xs font-semibold text-zinc-500">{g}<Icon n="chev" c={'h-3.5 w-3.5 transition '+(col[g]?'-rotate-90':'')}/></button>{!col[g]&&l.map(Item)}</div>)}</div>
+   <div className="border-t border-zinc-200 pt-2.5 dark:border-zinc-800">
+    {user.role==='Admin'&&<button onClick={()=>setPanel(panel==='admin'?'chat':'admin')} className="mb-2 flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm transition hover:bg-zinc-200/70 dark:hover:bg-zinc-800"><Icon n="users"/><span className="flex-1 text-left">Admin Dashboard</span><span className={'relative h-5 w-9 rounded-full transition '+(panel==='admin'?'bg-emerald-500':'bg-zinc-300 dark:bg-zinc-700')}><span className={'absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all '+(panel==='admin'?'left-[18px]':'left-0.5')}/></span></button>}
+    <div className="flex items-center gap-2.5 px-1.5 py-1.5"><label title="Upload profile image" className="group relative grid h-10 w-10 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-full bg-emerald-500 font-bold text-white">{user.avatar?<img src={user.avatar} alt="" className="h-full w-full object-cover"/>:user.name[0].toUpperCase()}<span className="absolute inset-0 grid place-items-center bg-black/50 opacity-0 transition group-hover:opacity-100"><Icon n="cam" c="h-4 w-4"/></span><input type="file" accept="image/*" className="hidden" onChange={avatar}/></label>
+     <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{user.name}</div><div className="flex items-center gap-1.5"><span className={'rounded-full px-2 text-[11px] font-semibold '+(user.role==='Admin'?'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400':'bg-zinc-500/15 text-zinc-500')}>{user.role}</span></div></div>
+     <button title="Log out" onClick={()=>{if(!DEMO)fetch('/api/logout',{method:'POST'});setUser(null);setView('about')}} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 transition hover:bg-zinc-200 hover:text-current dark:hover:bg-zinc-800"><Icon n="out"/></button></div></div>
+  </aside>
+  <main className="flex min-w-0 flex-1 flex-col">
+   <div className="flex items-center gap-2 px-3 py-2.5"><button onClick={()=>setSide(!side)} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><Icon n="panel"/></button>
+    {panel==='chat'?<select value={model||models[0]} onChange={e=>setModel(e.target.value)} className="cursor-pointer rounded-lg bg-transparent px-2 py-1.5 font-semibold outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800">{models.map(m=><option key={m} className="text-black">{m}</option>)}</select>:<div className="font-semibold">User Management</div>}
+    <div className="flex-1"/><ThemeBtn/></div>
+   {panel==='chat'?<Chat chat={chat} send={send} busy={busy}/>:<Admin/>}</main>
+  {pop&&pc&&<div style={{left:Math.min(pop.x,innerWidth-215),top:Math.min(pop.y,innerHeight-190)}} onClick={e=>e.stopPropagation()} className="fixed z-[80] w-52 rounded-2xl border border-zinc-700 bg-zinc-800 p-1.5 text-sm text-zinc-100 shadow-2xl">
+   {[['share','Share conversation',()=>setDlg({t:'share',id:pop.id})],['pin',pc.p?'Unpin':'Pin',()=>pin(pop.id)],['pencil','Rename',()=>setRen(pop.id)],['trash','Delete',()=>setDlg({t:'del',id:pop.id}),1]].map(([i,l,fn,red])=><button key={l} onClick={()=>{fn();setPop(null)}} className={'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-zinc-700 '+(red?'text-red-400':'')}><Icon n={i}/>{l}</button>)}</div>}
+  {dlg&&dc&&dlg.t==='share'&&<Modal onClose={()=>setDlg(null)}><h2 className="text-xl font-bold">Share conversation</h2><p className="my-3 text-sm text-zinc-500">Anyone with this link can view “{dc.t}”.</p>
+   <div className="flex gap-2"><input readOnly className={inp} value={'https://edgesight.example/share/'+dc.id} onFocus={e=>e.target.select()}/><button className={btnP} onClick={()=>{navigator.clipboard&&navigator.clipboard.writeText('https://edgesight.example/share/'+dc.id).catch(()=>{});say('Link copied')}}>Copy</button></div></Modal>}
+  {dlg&&dc&&dlg.t==='del'&&<Modal onClose={()=>setDlg(null)}><h2 className="text-xl font-bold">Delete chat?</h2><p className="my-3 text-sm text-zinc-500">“{dc.t}” will be permanently removed.</p><div className="flex justify-end gap-2"><button className={btnS} onClick={()=>setDlg(null)}>Cancel</button><button className="rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-600" onClick={()=>{if(!DEMO&&!dc.tmp)api('/api/conversations/'+dc.id,'DELETE').catch(()=>{});setChats(cs=>cs.filter(c=>c.id!==dc.id));if(cur===dc.id)setCur(null);setDlg(null);say('Chat deleted')}}>Delete</button></div></Modal>}
+ </div>}
+
+const V={about:About,landing:Landing,signin:SignIn,signup:SignUp,app:AppShell};
+function Root(){const {view}=useContext(Ctx);const C=V[view];return <C/>}
+ReactDOM.createRoot(document.getElementById('root')).render(<Provider><Root/></Provider>);
 </script>
 </body>
 </html>

@@ -69,14 +69,18 @@ def login_user(username, password):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT user_id, username, password_hash, role
-        FROM users
-        WHERE username = ? AND is_active = 1
-    """, (username,))
+    try:
+        cursor.execute("""
+            SELECT user_id, username, password_hash, role
+            FROM users
+            WHERE (username = ? OR email = ?)
+            AND is_active = 1
+        """, (username.strip(), username.strip().lower()))
 
-    user = cursor.fetchone()
-    conn.close()
+        user = cursor.fetchone()
+
+    finally:
+        conn.close()
 
     if user and verify_password(password, user[2]):
         return {
@@ -86,7 +90,6 @@ def login_user(username, password):
         }
 
     return None
-
 
 def validate_account(username, email, password):
     if not all(isinstance(value, str) for value in (username, email, password)):
