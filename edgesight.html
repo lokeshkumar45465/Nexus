@@ -9,6 +9,7 @@
 <script>tailwind.config={darkMode:'class'}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body,#root{height:100%;margin:0}body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .25s,color .25s}</style>
 </head>
@@ -23,7 +24,7 @@ const btnP="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-9
 const btnS="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 px-5 py-2.5 text-sm font-semibold transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
 const today=()=>new Date().toISOString().slice(0,10);
 let DEMO=false;
-async function api(url,method='GET',body){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.status===401)throw new Error('auth');return r.json()}
+async function api(url,method='GET',body){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(r.status===401)throw new Error('auth');if(!r.ok){let d='Server error ('+r.status+')';try{d=(await r.json()).detail||d}catch(e){}throw new Error(d)}return r.json()}
 const fromApi=u=>({id:u.user_id,name:u.username,email:u.email||u.username,role:u.role==='admin'?'Admin':'User'});
 const pinIds=()=>{try{return JSON.parse(localStorage.getItem('es_pins')||'[]')}catch(e){return[]}};
 const savePins=l=>{try{localStorage.setItem('es_pins',JSON.stringify(l.filter(c=>c.p&&!c.tmp).map(c=>c.id)))}catch(e){}};
@@ -47,6 +48,7 @@ function md(t){const b=[];t=t.replace(/```(\w*)\n([\s\S]*?)```/g,(_,l,c)=>{b.pus
  h=h.split(/\n{2,}/).map(p=>/^<li/.test(p.trim())||p.includes('\u0000')?p:'<p class="mb-2">'+p.replace(/\n/g,'<br>')+'</p>').join('');
  return h.replace(/\u0000(\d+)\u0000/g,(_,i)=>b[i])}
 const reply=q=>{q=q.toLowerCase();
+ if(/chart|graph|plot|pie|histogram|\bbar\b/.test(q))return 'Here is a sample chart of **average health score by equipment type** (demo data).\n\n```chart\n'+JSON.stringify({type:'bar',title:'Average health score by equipment type',labels:['Pump','Motor','Compressor','Fan','Gearbox'],datasets:[{label:'Average health score',data:[78.4,71.2,66.9,82.1,74.5]}],xLabel:'Equipment type',yLabel:'Average health score'})+'\n```';
  if(/firmware|ota/.test(q))return 'Across the **42 gateways** in the sample fleet, 3 report a firmware mismatch.\n\n- `GW-017` is on v2.3.1 (expected v2.4.0)\n- `GW-029` failed its last OTA update\n- `GW-034` has not checked in for 6 hours\n\nThis is mock data for the prototype.';
  if(/query|sql|code/.test(q))return 'Here is a sample telemetry query:\n\n```sql\nSELECT device_id, AVG(temp_c) AS avg_temp\nFROM telemetry\nWHERE ts > NOW() - INTERVAL \'24 hours\'\nGROUP BY device_id\nHAVING AVG(temp_c) > 70;\n```\n\nIt lists devices running hot over the last day.';
  return 'I can look into **telemetry**, **diagnostic codes**, **firmware status** and **operational metrics**.\n\n- Try “Which devices are offline?”\n- Or “Show firmware mismatches”\n\nThis prototype returns sample answers only.'};
@@ -136,17 +138,43 @@ function SignUp(){const {users,setUsers,setUser,setView,say}=useContext(Ctx);
   <p className="mt-5 text-center text-sm text-zinc-500">Already registered? <button className="font-semibold text-emerald-600 underline" onClick={()=>useContext&&setView('signin')}>Sign in</button></p></AuthShell>}
 
 /* Chat */
-function Chat({chat,send,busy}){
+const toMsg=r=>({r:r.role==='assistant'?'ai':'user',c:r.content,id:r.message_id,t:r.created_at});
+const fmt=t=>{if(!t)return '';const d=new Date(/Z|T/.test(t)?t:String(t).replace(' ','T')+'Z');return isNaN(d)?'':d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})};
+function UserMsg({m,onEdit}){
+ const [ed,setEd]=useState(false),[v,setV]=useState(m.c),[ok,setOk]=useState(false);
+ const copy=()=>{navigator.clipboard&&navigator.clipboard.writeText(m.c).catch(()=>{});setOk(true);setTimeout(()=>setOk(false),1500)};
+ const ibtn='grid h-7 w-7 place-items-center rounded-lg transition hover:bg-zinc-200 hover:text-current dark:hover:bg-zinc-800';
+ if(ed)return <div className="my-5 flex justify-end"><div className="w-full max-w-[80%] rounded-3xl bg-zinc-100 p-3 dark:bg-zinc-800"><textarea autoFocus value={v} onChange={e=>setV(e.target.value)} rows={Math.min(8,Math.max(2,v.split('\n').length))} className="w-full resize-none bg-transparent px-2 py-1 outline-none"/><div className="mt-2 flex justify-end gap-2"><button onClick={()=>{setEd(false);setV(m.c)}} className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm font-semibold transition hover:bg-zinc-200 dark:border-zinc-600 dark:hover:bg-zinc-700">Cancel</button><button disabled={!v.trim()} onClick={()=>{setEd(false);onEdit(v)}} className="rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white transition disabled:opacity-40 dark:bg-white dark:text-zinc-900">Send</button></div></div></div>;
+ return <div className="group my-5 flex flex-col items-end"><div className="max-w-[80%] whitespace-pre-wrap rounded-3xl bg-zinc-100 px-5 py-2.5 dark:bg-zinc-800">{m.c}</div>
+  <div className="mt-1 flex items-center gap-1 pr-1 text-xs text-zinc-500 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"><span className="mr-1">{fmt(m.t)}</span>
+   <button title="Copy message" onClick={copy} className={ibtn}><Icon n={ok?'check':'copy'} c="h-4 w-4"/></button>
+   <button title="Edit message" onClick={()=>{setV(m.c);setEd(true)}} className={ibtn}><Icon n="pencil" c="h-4 w-4"/></button></div></div>}
+const PAL=['#10a37f','#6366f1','#f59e0b','#ef4444','#06b6d4','#a855f7','#84cc16','#ec4899','#14b8a6','#f97316'];
+function ChartBlock({spec}){
+ const {dark}=useContext(Ctx),ref=useRef(),[type,setType]=useState(spec.type),cat=spec.type!=='scatter',key=JSON.stringify(spec);
+ useEffect(()=>{
+  if(!window.Chart||!ref.current)return;
+  const txt=dark?'#d4d4d8':'#3f3f46',grid=dark?'#3f3f46':'#e4e4e7',pie=type==='pie';
+  const ds=spec.datasets.map((d,i)=>({...d,backgroundColor:pie?spec.labels.map((_,j)=>PAL[j%PAL.length]):type==='line'?PAL[i%PAL.length]+'33':PAL[i%PAL.length],borderColor:pie?(dark?'#18181b':'#ffffff'):PAL[i%PAL.length],borderWidth:2,tension:.3,fill:type==='line',pointRadius:3}));
+  const c=new window.Chart(ref.current,{type,data:{labels:spec.labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{display:pie,labels:{color:txt}},title:{display:true,text:spec.title,color:txt,font:{size:14}}},scales:pie?{}:{x:{title:{display:!!spec.xLabel,text:spec.xLabel,color:txt},ticks:{color:txt},grid:{color:grid}},y:{title:{display:!!spec.yLabel,text:spec.yLabel,color:txt},ticks:{color:txt},grid:{color:grid},beginAtZero:cat}}},plugins:[{id:'bg',beforeDraw:ch=>{const x=ch.ctx;x.save();x.globalCompositeOperation='destination-over';x.fillStyle=dark?'#18181b':'#ffffff';x.fillRect(0,0,ch.width,ch.height);x.restore()}}]});
+  return()=>c.destroy()},[type,dark,key]);
+ const dl=()=>{const a=document.createElement('a');a.href=ref.current.toDataURL('image/png');a.download=(spec.title||'chart').replace(/\W+/g,'_')+'.png';a.click()};
+ return <div className="my-3 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900"><div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+  {cat?<div className="flex rounded-lg bg-zinc-100 p-0.5 text-xs dark:bg-zinc-800">{['bar','line','pie'].map(t=><button key={t} onClick={()=>setType(t)} className={'rounded-md px-3 py-1 font-semibold capitalize transition '+(type===t?'bg-white shadow dark:bg-zinc-700':'text-zinc-500')}>{t}</button>)}</div>:<span/>}
+  <button onClick={dl} className="rounded-lg border border-zinc-300 px-3 py-1 text-xs font-semibold transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800">Download PNG</button></div>
+  <div className="relative h-72"><canvas ref={ref}/></div></div>}
+const Rich=({text})=>{const parts=text.split(/```chart\n([\s\S]*?)```/);return <>{parts.map((p,i)=>{if(i%2){let s=null;try{s=JSON.parse(p)}catch(e){}return s?<ChartBlock key={i} spec={s}/>:null}return p.trim()?<div key={i} dangerouslySetInnerHTML={{__html:md(p)}}/>:null})}</>};
+function Chat({chat,send,busy,edit}){
  const [t,setT]=useState(''),ref=useRef(),end=useRef();
  useEffect(()=>{end.current&&end.current.scrollIntoView({behavior:'smooth'})},[chat&&chat.m&&chat.m.length,busy]);
  const go=()=>{send(t);setT('');if(ref.current)ref.current.style.height='auto'};
  const msgs=(chat&&chat.m)||[];
  return <>
   <div className="flex-1 overflow-y-auto">{msgs.length===0?<div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center"><span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500 text-white"><Icon n="cpu" c="h-6 w-6"/></span><h2 className="text-2xl font-semibold">What can I help you analyze?</h2>
-   <div className="flex flex-wrap justify-center gap-2">{['Which devices are offline?','Show firmware mismatches','Write a telemetry query'].map(s=><button key={s} onClick={()=>send(s)} className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-current dark:border-zinc-700 dark:hover:bg-zinc-800">{s}</button>)}</div></div>
+   <div className="flex flex-wrap justify-center gap-2">{['Bar chart of average health score by equipment type','Pie chart of failures by equipment type','Line chart of vibration over time'].map(s=><button key={s} onClick={()=>send(s)} className="rounded-full border border-zinc-300 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-current dark:border-zinc-700 dark:hover:bg-zinc-800">{s}</button>)}</div></div>
   :<div className="mx-auto max-w-3xl px-5 py-4">{msgs.map((m,i)=>m.r==='user'
-   ?<div key={i} className="my-5 flex justify-end"><div className="max-w-[80%] whitespace-pre-wrap rounded-3xl bg-zinc-100 px-5 py-2.5 dark:bg-zinc-800">{m.c}</div></div>
-   :<div key={i} className="my-5 flex gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">E</span><div className="min-w-0 flex-1"><div dangerouslySetInnerHTML={{__html:md(m.c)}}/><button title="Copy" onClick={()=>navigator.clipboard&&navigator.clipboard.writeText(m.c).catch(()=>{})} className="mt-1 text-zinc-400 hover:text-current"><Icon n="copy" c="h-4 w-4"/></button></div></div>)}
+   ?<UserMsg key={i} m={m} onEdit={t=>edit(i,m,t)}/>
+   :<div key={i} className="my-5 flex gap-3"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">E</span><div className="min-w-0 flex-1"><Rich text={m.c}/><button title="Copy" onClick={()=>navigator.clipboard&&navigator.clipboard.writeText(m.c.replace(/```chart\n[\s\S]*?```/g,'').trim()).catch(()=>{})} className="mt-1 text-zinc-400 hover:text-current"><Icon n="copy" c="h-4 w-4"/></button></div></div>)}
    {busy&&<div className="my-5 flex gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500 text-xs font-bold text-white">E</span><div className="flex items-center gap-1.5">{[0,1,2].map(i=><span key={i} className="h-2 w-2 animate-pulse rounded-full bg-zinc-400" style={{animationDelay:i*.15+'s'}}/>)}</div></div>}<div ref={end}/></div>}</div>
   <div className="px-5 pb-2"><div className="mx-auto flex max-w-3xl items-end gap-2 rounded-3xl bg-zinc-100 p-2 dark:bg-zinc-800">
    <textarea ref={ref} rows={1} value={t} placeholder="Ask about telemetry, firmware, diagnostics…" className="max-h-48 flex-1 resize-none bg-transparent px-3 py-2 outline-none" onChange={e=>{setT(e.target.value);e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,192)+'px'}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}}/>
@@ -156,7 +184,7 @@ function Chat({chat,send,busy}){
 /* Admin dashboard */
 function Admin(){const {user,users,setUsers,say}=useContext(Ctx);
  const load=()=>api('/api/admin/users').then(l=>setUsers(l.map(u=>({id:u.user_id,name:u.username,email:u.email,role:u.role==='admin'?'Admin':'User',pos:u.position||'Operations Engineer',active:!!u.is_active,joined:(u.created_at||'').slice(0,10)})))).catch(()=>say('Could not load users.'));
- useEffect(()=>{if(!DEMO)load()},[]);
+ useEffect(()=>{if(DEMO)return;setUsers([]);load();const t=setInterval(load,15000);return()=>clearInterval(t)},[]);
  const [del,setDel]=useState(null),[inv,setInv]=useState(false),[f,setF]=useState({name:'',email:'',role:'User',pos:'Fleet Manager'}),[ferr,setFerr]=useState('');
  const stats=[['Active users',users.filter(u=>u.active).length],['Admins',users.filter(u=>u.role==='Admin').length],['Fleet Managers',users.filter(u=>u.pos==='Fleet Manager').length],['Operations Engineers',users.filter(u=>u.pos==='Operations Engineer').length]];
  const setRole=(u,r)=>{if(u.id===user.id)return say('You can’t change your own role.');
@@ -170,7 +198,7 @@ function Admin(){const {user,users,setUsers,say}=useContext(Ctx);
   say('Invitation sent to '+f.email.trim());setInv(false);setF({name:'',email:'',role:'User',pos:'Fleet Manager'});setFerr('')};
  return <div className="flex-1 overflow-y-auto px-5 pb-8"><div className="mx-auto max-w-5xl">
   <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">{stats.map(([l,v])=><div key={l} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-800/50"><div className="text-3xl font-bold">{v}</div><div className="text-sm text-zinc-500">{l}</div></div>)}</div>
-  <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">All users ({users.length})</h2><button className={btnP+' !py-2'} onClick={()=>setInv(true)}><Icon n="plus"/>Invite user</button></div>
+  <div className="mb-3 flex items-center justify-between"><h2 className="font-semibold">All users ({users.length})</h2><div className="flex gap-2">{!DEMO&&<button className={btnS+' !py-2'} onClick={()=>{load();say('User list refreshed.')}}>Refresh</button>}<button className={btnP+' !py-2'} onClick={()=>setInv(true)}><Icon n="plus"/>Invite user</button></div></div>
   <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800"><table className="w-full min-w-[720px] text-left text-sm">
    <thead className="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-800/60"><tr>{['Name','Email','Role','Status','Joined','Actions'].map(h=><th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr></thead>
    <tbody>{users.map(u=><tr key={u.id} className="border-t border-zinc-200 dark:border-zinc-800">
@@ -191,15 +219,21 @@ function AppShell(){
  const [panel,setPanel]=useState('chat'),[chats,setChats]=useState(()=>DEMO?seedChats:[]),[cur,setCur]=useState(null),[side,setSide]=useState(true),[pop,setPop]=useState(null),[ren,setRen]=useState(null),[dlg,setDlg]=useState(null),[busy,setBusy]=useState(false),[col,setCol]=useState({}),[models,setModels]=useState(['llama3.2','mistral','GPT-4o','Claude 3.5 Sonnet']),[model,setModel]=useState('');
  useEffect(()=>{const f=()=>setPop(null);document.addEventListener('click',f);return()=>document.removeEventListener('click',f)},[]);
  useEffect(()=>{if(DEMO)return;api('/api/conversations').then(l=>{const p=pinIds();setChats(l.map(c=>({id:c.conversation_id,t:c.title,g:groupOf(c.updated_at),p:p.includes(c.conversation_id),m:null})))}).catch(()=>{});api('/api/models').then(l=>{if(l.length)setModels(l)}).catch(()=>{})},[]);
- const openChat=async c=>{setCur(c.id);setPanel('chat');if(c.m===null){try{const rows=await api('/api/conversations/'+c.id);setChats(cs=>cs.map(x=>x.id===c.id?{...x,m:rows.map(r=>({r:r.role==='assistant'?'ai':'user',c:r.content}))}:x))}catch(e){}}};
+ const openChat=async c=>{setCur(c.id);setPanel('chat');if(c.m===null){try{const rows=await api('/api/conversations/'+c.id);setChats(cs=>cs.map(x=>x.id===c.id?{...x,m:rows.map(toMsg)}:x))}catch(e){}}};
  const chat=chats.find(c=>c.id===cur),pc=pop&&chats.find(c=>c.id===pop.id),dc=dlg&&chats.find(c=>c.id===dlg.id);
  const send=text=>{if(!text.trim()||busy)return;
   let id=cur;const cid=cur&&!(chats.find(c=>c.id===cur)||{}).tmp?cur:null;if(!id){id=Date.now();setChats(cs=>[{id,t:text.slice(0,40),g:'Today',p:false,tmp:true,m:[]},...cs]);setCur(id)}
   const add=m=>setChats(cs=>cs.map(c=>c.id===id?{...c,m:[...(c.m||[]),m]}:c));
-  add({r:'user',c:text});setBusy(true);
+  add({r:'user',c:text,t:new Date().toISOString()});setBusy(true);
   if(DEMO)setTimeout(()=>{add({r:'ai',c:reply(text)});setBusy(false)},900);
-  else api('/api/chat','POST',{question:text,conversation_id:cid,save_user:true,model:model||models[0]}).then(r=>{setChats(cs=>cs.map(c=>c.id===id?{...c,id:r.conversation_id,tmp:false,m:[...(c.m||[]),{r:'ai',c:r.answer}]}:c));setCur(r.conversation_id)}).catch(()=>add({r:'ai',c:'Could not reach the server. Check that uvicorn and Ollama are running.'})).finally(()=>setBusy(false))};
+  else api('/api/chat','POST',{question:text,conversation_id:cid,save_user:true,model:model||models[0]}).then(r=>{setChats(cs=>cs.map(c=>c.id===id?{...c,id:r.conversation_id,tmp:false,m:[...(c.m||[]),{r:'ai',c:r.answer}]}:c));setCur(r.conversation_id);api('/api/conversations/'+r.conversation_id).then(rows=>setChats(cs=>cs.map(c=>c.id===r.conversation_id?{...c,m:rows.map(toMsg)}:c))).catch(()=>{})}).catch(e=>add({r:'ai',c:'Sorry, that failed: '+(e.message==='Failed to fetch'?'the server is not running. Start it with start.bat or uvicorn server:app --reload.':e.message)})).finally(()=>setBusy(false))};
  const rename=(id,v)=>{v=v.trim();if(v&&!DEMO&&!(chats.find(c=>c.id===id)||{}).tmp)api('/api/conversations/'+id,'PATCH',{title:v.slice(0,100)}).catch(()=>{});if(v)setChats(cs=>cs.map(c=>c.id===id?{...c,t:v.slice(0,100)}:c));setRen(null)};
+ const edit=async(i,m,text)=>{
+  if(!text.trim()||busy)return;
+  if(!DEMO){if(!m.id)return say('Still saving, try again in a moment.');
+   try{await api('/api/conversations/'+cur+'/truncate','POST',{from_id:m.id})}catch(e){return say('Could not edit that message.')}}
+  setChats(cs=>cs.map(x=>x.id===cur?{...x,m:(x.m||[]).slice(0,i)}:x));
+  send(text)};
  const pin=id=>{const n=chats.map(c=>c.id===id?{...c,p:!c.p}:c);setChats(n);savePins(n)};
  const avatar=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>setUser(u=>({...u,avatar:r.result}));r.readAsDataURL(f)};
  const pinned=chats.filter(c=>c.p),groups=[...(pinned.length?[['Pinned',pinned]]:[]),...[...new Set(chats.filter(c=>!c.p).map(c=>c.g))].map(g=>[g,chats.filter(c=>!c.p&&c.g===g)])];
@@ -221,7 +255,7 @@ function AppShell(){
    <div className="flex items-center gap-2 px-3 py-2.5"><button onClick={()=>setSide(!side)} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"><Icon n="panel"/></button>
     {panel==='chat'?<select value={model||models[0]} onChange={e=>setModel(e.target.value)} className="cursor-pointer rounded-lg bg-transparent px-2 py-1.5 font-semibold outline-none hover:bg-zinc-100 dark:hover:bg-zinc-800">{models.map(m=><option key={m} className="text-black">{m}</option>)}</select>:<div className="font-semibold">User Management</div>}
     <div className="flex-1"/><ThemeBtn/></div>
-   {panel==='chat'?<Chat chat={chat} send={send} busy={busy}/>:<Admin/>}</main>
+   {panel==='chat'?<Chat chat={chat} send={send} busy={busy} edit={edit}/>:<Admin/>}</main>
   {pop&&pc&&<div style={{left:Math.min(pop.x,innerWidth-215),top:Math.min(pop.y,innerHeight-190)}} onClick={e=>e.stopPropagation()} className="fixed z-[80] w-52 rounded-2xl border border-zinc-700 bg-zinc-800 p-1.5 text-sm text-zinc-100 shadow-2xl">
    {[['share','Share conversation',()=>setDlg({t:'share',id:pop.id})],['pin',pc.p?'Unpin':'Pin',()=>pin(pop.id)],['pencil','Rename',()=>setRen(pop.id)],['trash','Delete',()=>setDlg({t:'del',id:pop.id}),1]].map(([i,l,fn,red])=><button key={l} onClick={()=>{fn();setPop(null)}} className={'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-zinc-700 '+(red?'text-red-400':'')}><Icon n={i}/>{l}</button>)}</div>}
   {dlg&&dc&&dlg.t==='share'&&<Modal onClose={()=>setDlg(null)}><h2 className="text-xl font-bold">Share conversation</h2><p className="my-3 text-sm text-zinc-500">Anyone with this link can view “{dc.t}”.</p>

@@ -1,5 +1,7 @@
 import ollama
 import os
+import json
+from charts import build_chart, strip_charts
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -11,6 +13,7 @@ from auth import login_user, register_user, validate_account
 from chat_history import (
     create_conversation, get_user_conversations,
     get_conversation_messages, save_message, delete_conversation,
+    rename_conversation,
 )
 from data_loader import get_dataset_from_database, refresh_database
 from rag_engine import generate_rag_answer, index_documents
@@ -52,6 +55,14 @@ class ChatIn(BaseModel):
     question: str
     conversation_id: int | None = None
     save_user: bool = True
+    model: str | None = None
+
+def installed_models():
+    try:
+        response = ollama.list()
+        return [model.model for model in response.models if "embed" not in model.model]
+    except Exception:
+        return []
 
 @app.get("/")
 def home():
@@ -63,7 +74,7 @@ def get_models(request: Request):
 
     try:
         response = ollama.list()
-        return [model.model for model in response.models]
+        return [model.model for model in response.models if "embed" not in model.model]
 
     except Exception as error:
         raise HTTPException(
@@ -73,7 +84,16 @@ def get_models(request: Request):
         
 @app.post("/api/login")
 def login(data: LoginIn, request: Request):
-    user = login_user(data.username.strip(), data.password)
+    identifier = data.username.strip()
+    if "@" in identifier:
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT username FROM users WHERE email = ?", (identifier.lower(),)
+        ).fetchone()
+        conn.close()
+        if row:
+            identifier = row["username"]
+    user = login_user(identifier, data.password)
     if not user:
         return {"error": "Invalid username or password."}
     request.session["user"] = user
@@ -102,15 +122,35 @@ def remove(cid: int, request: Request):
     return {"ok": delete_conversation(current_user(request)["user_id"], cid)}
 
 @app.post("/api/chat")
-async def chat(data: ChatIn, request: Request):
+def chat(data: ChatIn, request: Request):
     uid = current_user(request)["user_id"]
     cid = data.conversation_id
     if cid is None:
         cid = create_conversation(uid, data.question.strip()[:40] or "New Chat")
-    history = get_conversation_messages(uid, cid)
+    history = [
+        {"role": m["role"], "content": strip_charts(m["content"])}
+        for m in get_conversation_messages(uid, cid)
+    ]
     if data.save_user:
         save_message(uid, cid, "user", data.question)
-    answer = generate_rag_answer(data.question, get_df(), history)
+
+    result = build_chart(data.question, get_df())
+    if result:
+        answer = result["text"]
+        if result["chart"]:
+            answer += "\n\n```chart\n" + json.dumps(result["chart"]) + "\n```"
+    else:
+        try:
+            model = data.model if data.model in installed_models() else None
+            answer = generate_rag_answer(data.question, get_df(), history, model=model)
+        except Exception as error:
+            raise HTTPException(
+                503,
+                "The AI model could not answer. Make sure Ollama is running and the "
+                "models llama3.2 and nomic-embed-text are installed. "
+                f"Details: {error}",
+            )
+
     save_message(uid, cid, "assistant", answer)
     return {"answer": answer, "conversation_id": cid}
 
@@ -230,3 +270,57 @@ def admin_create(data: NewUser, request: Request):
     finally:
         conn.close()
     return {"ok": True, "temp_password": temp}
+
+class TruncateIn(BaseModel):
+    from_id: int
+
+@app.post("/api/conversations/{cid}/truncate")
+def truncate(cid: int, data: TruncateIn, request: Request):
+    uid = current_user(request)["user_id"]
+    conn = get_connection()
+    try:
+        owned = conn.execute(
+            "SELECT 1 FROM conversations WHERE conversation_id=? AND user_id=?",
+            (cid, uid),
+        ).fetchone()
+        if not owned:
+            raise HTTPException(404, "Conversation not found")
+        conn.execute(
+            "DELETE FROM messages WHERE conversation_id=? AND message_id>=?",
+            (cid, data.from_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+class RenameIn(BaseModel):
+    title: str
+
+@app.patch("/api/conversations/{cid}")
+def rename(cid: int, data: RenameIn, request: Request):
+    ok = rename_conversation(current_user(request)["user_id"], cid, data.title)
+    return {"ok": ok}
+
+class ForgotIn(BaseModel):
+    email: str
+
+@app.post("/api/forgot-password")
+def forgot_password(data: ForgotIn):
+    # No email sending is set up yet, so this only records the request.
+    # It always returns success so it never reveals which emails have accounts.
+    print(f"Password reset requested for {data.email}")
+    return {"ok": True}
+
+REQUIRED_MODELS = ("llama3.2", "nomic-embed-text")
+
+@app.get("/api/health")
+def health():
+    try:
+        names = [m.model for m in ollama.list().models]
+    except Exception as error:
+        return {"server": "ok", "ollama": False, "error": str(error),
+                "models": [], "missing": list(REQUIRED_MODELS)}
+    missing = [r for r in REQUIRED_MODELS if not any(n.startswith(r) for n in names)]
+    return {"server": "ok", "ollama": True, "models": names, "missing": missing}

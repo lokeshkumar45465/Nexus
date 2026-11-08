@@ -393,7 +393,7 @@ def build_dataset_context(df):
 # 9. Generate the final RAG answer
 # --------------------------------------------------
 
-def generate_rag_answer(question, df, chat_history=None):
+def generate_rag_answer(question, df, chat_history=None, model=None):
     """Combine document retrieval, Pandas and Ollama."""
 
     retrieved_docs = retrieve_documents(question)
@@ -461,7 +461,7 @@ RULES:
     })
 
     response = ollama.chat(
-        model=CHAT_MODEL,
+        model=model or CHAT_MODEL,
         messages=messages,
         options={
             "temperature": 0.2
